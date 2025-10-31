@@ -1,0 +1,30 @@
+﻿@model LearningProject.Models.ViewModels.RoleClaimsViewModel
+
+@{
+    ViewData["Title"] = "Atribuie Claims rolului";
+}
+
+<div class="container mt-4">
+    <h3>@Model.RolDenumire - Atribuie Claims</h3>
+    <form asp-action="AssignClaims" method="post">
+        <input type="hidden" asp-for="RolId" />
+
+        <div class="mb-3">
+            @foreach (var claim in Model.Claims)
+            {
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox"
+                           asp-for="Claims[@Model.Claims.IndexOf(claim)].Selected" />
+                    <input type="hidden" asp-for="Claims[@Model.Claims.IndexOf(claim)].ClaimId" />
+                    <label class="form-check-label">
+                        @claim.ClaimName
+                    </label>
+                </div>
+            }
+        </div>
+
+        <button type="submit" class="btn btn-success">Salvează</button>
+        <a asp-action="Index" class="btn btn-secondary">Înapoi</a>
+    </form>
+</div>
+

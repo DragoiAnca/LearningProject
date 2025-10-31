@@ -1,0 +1,61 @@
+﻿@model LearningProject.Models.User
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+<div class="container mt-5">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">Edit User</h3>
+        </div>
+        <div class="card-body">
+            <form asp-action="Edit" asp-controller="Users" asp-route-id="@Model.IdUser" method="post">
+
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                <input type="hidden" asp-for="IdUser" />
+
+                <div class="mb-3">
+                    <label asp-for="Name" class="form-label"></label>
+                    <input asp-for="Name" class="form-control form-control-lg" />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Email" class="form-label"></label>
+                    <input asp-for="Email" class="form-control form-control-lg" />
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="id_departament" class="form-label">Denumire Departament</label>
+                    <select asp-for="id_departament" class="form-select form-select-lg"
+                            asp-items="ViewBag.id_departament">
+                        <option value="">-- Selectează denumire departament --</option>
+                    </select>
+                    <span asp-validation-for="id_departament" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="roluriID" class="form-label">Denumire Rol</label>
+                    <select asp-for="roluriID" class="form-select form-select-lg"
+                            asp-items="ViewBag.roluriID">
+                        <option value="">-- Selectează rolul --</option>
+                    </select>
+                    <span asp-validation-for="roluriID" class="text-danger"></span>
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <input type="submit" value="Save" class="btn btn-success btn-lg" />
+                    <a asp-action="Index" class="btn btn-secondary btn-lg">Back to List</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

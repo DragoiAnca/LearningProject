@@ -1,0 +1,47 @@
+﻿@model LearningProject.Models.Claim
+
+@{
+    ViewData["Title"] = "Șterge Claim";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0"><i class="bi bi-exclamation-triangle me-2"></i> Șterge Claim</h4>
+                    <a asp-action="Index" class="btn btn-light btn-sm">
+                        <i class="bi bi-arrow-left-circle"></i> Înapoi
+                    </a>
+                </div>
+
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Confirmare Ștergere</h5>
+                    <p class="text-warning fw-semibold">
+                        Ești sigur că vrei să ștergi acest claim? Această acțiune nu poate fi anulată.
+                    </p>
+
+                    <dl class="row mb-4">
+                        <dt class="col-sm-4 fw-semibold">Nume Claim:</dt>
+                        <dd class="col-sm-8">@Html.DisplayFor(model => model.name)</dd>
+                    </dl>
+
+                    <form asp-action="Delete" method="post" class="d-flex gap-2">
+                        <input type="hidden" asp-for="IdClaim" />
+                        <button type="submit" class="btn btn-danger px-4">
+                            <i class="bi bi-trash"></i> Șterge
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary px-4">
+                            <i class="bi bi-x-circle"></i> Anulează
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+}
+

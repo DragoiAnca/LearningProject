@@ -1,0 +1,72 @@
+﻿@model IEnumerable<LearningProject.Models.Claim>
+
+@{
+    ViewData["Title"] = "Gestionare Claims";
+}
+
+<div class="container mt-4">
+    <div class="card shadow-lg border-0">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">Gestionare Claims</h4>
+            <a asp-action="Create" class="btn btn-light btn-sm">
+                <i class="bi bi-plus-circle"></i> Adaugă Claim
+            </a>
+        </div>
+
+        <div class="card-body">
+            @if (Model != null && Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>@Html.DisplayNameFor(model => model.name)</th>
+                                <th class="text-center" style="width: 180px;">Acțiuni</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                <tr class="align-middle">
+                                    <td class="py-3">@Html.DisplayFor(modelItem => item.name)</td>
+                                    <td class="text-center">
+                                        <div class="d-flex justify-content-center gap-2">
+                                            <a asp-action="Edit" asp-route-id="@item.IdClaim"
+                                               class="btn btn-outline-warning btn-sm"
+                                               data-bs-toggle="tooltip" title="Editează Claim">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </a>
+
+                                            <a asp-action="Details" asp-route-id="@item.IdClaim"
+                                               class="btn btn-outline-info btn-sm"
+                                               data-bs-toggle="tooltip" title="Vezi Detalii">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+
+                                            <a asp-action="Delete" asp-route-id="@item.IdClaim"
+                                               class="btn btn-outline-danger btn-sm"
+                                               data-bs-toggle="tooltip" title="Șterge Claim">
+                                                <i class="bi bi-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-warning text-center">
+                    Nu există claims înregistrate.
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+}
