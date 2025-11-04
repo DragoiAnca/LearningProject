@@ -1,0 +1,14 @@
+﻿@{
+    ViewData["Title"] = "Nu există utilizatori";
+    var departament = ViewData["DepartamentName"]?.ToString() ?? "necunoscut";
+}
+
+<div class="container mt-5 text-center">
+    <h1 class="text-danger">Nu există utilizatori în departamentul <strong>@departament</strong></h1>
+    <p class="text-muted">Acest departament nu are încă angajați asociați.</p>
+
+    <div class="mt-4">
+        <a asp-action="Index" class="btn btn-primary">Înapoi la lista departamentelor</a>
+    </div>
+</div>
+

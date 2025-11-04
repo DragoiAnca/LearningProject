@@ -9,7 +9,6 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
 builder.Services.AddDbContext<LearningProjectContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("LearningProjectContext") ?? throw new InvalidOperationException("Connection string 'LearningProjectContext' not found.")));
 
@@ -21,14 +20,12 @@ builder.Services.AddScoped<IClaimsTransformation, ClaimsTransformer>();
 builder.Services.AddScoped<ErrorLoggerService>();
 builder.Services.AddScoped<IUsers, Users>();
 
-
 builder.Services.AddAuthorization(options =>
 {
     options.FallbackPolicy = new AuthorizationPolicyBuilder()
         .RequireAuthenticatedUser()
         .Build();
 });
-
 
 var app = builder.Build();
 

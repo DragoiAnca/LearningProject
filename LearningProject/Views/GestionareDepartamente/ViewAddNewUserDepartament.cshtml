@@ -1,0 +1,21 @@
+﻿@model IEnumerable<LearningProject.Models.User>
+
+
+@{
+    ViewData["Title"] = "Hello";
+}
+
+<h1>Hello, there!</h1>
+
+<ul class="list-group">
+    @foreach (var index in Model)
+    {
+        <li class="list-group-item">
+            <input type="checkbox" name="selectedUsers" value="@index.Name" />
+            @index.Name
+        </li>
+    }
+</ul>
+
+<button>Save</button>
+

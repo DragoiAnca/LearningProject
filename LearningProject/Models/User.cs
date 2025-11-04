@@ -25,5 +25,11 @@ namespace LearningProject.Models
         public int id_departament { get; set; }
         public virtual Departamente? Departamente { get; set; }
 
+        [DataType(DataType.Date)]
+        public DateTime data_time { get; set; }
+
+        [DataType(DataType.Date)]
+        public DateTime? data_dezactivare { get; set; }
+
     }
 }

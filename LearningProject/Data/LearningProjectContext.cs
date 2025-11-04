@@ -18,6 +18,7 @@ namespace LearningProject.Data
         public DbSet<LearningProject.Models.Roluri> Roluri { get; set; } = default!;
         public DbSet<LearningProject.Models.Claim> Claim { get; set; } = default!;
         public DbSet<LearningProject.Models.ErrorLog> ErrorLogs { get; set; } = default!;
+        public DbSet<LearningProject.Models.Cereri> Cereri {  get; set; } = default!;
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -35,6 +36,20 @@ namespace LearningProject.Data
                 .WithMany()
                 .HasForeignKey(u => u.id_departament)
                 .OnDelete(DeleteBehavior.Restrict);
+
+          modelBuilder.Entity<Cereri>()
+          .HasOne(c => c.CreatedByUser)
+          .WithMany()
+          .HasForeignKey(c => c.CreatedByUserId)
+          .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Cereri>()
+                .HasOne(c => c.DeletedBy)
+                .WithMany()
+                .HasForeignKey(c => c.DeletedById)
+                .OnDelete(DeleteBehavior.Restrict);
+
+
         }
 
     }

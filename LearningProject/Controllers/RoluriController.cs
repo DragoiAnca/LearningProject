@@ -1,6 +1,7 @@
 ﻿using LearningProject.Data;
 using LearningProject.Models;
 using LearningProject.Models.ViewModels;
+using LearningProject.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -140,9 +141,7 @@ namespace LearningProject.Controllers
             return View(roluri);
         }
 
-        // POST: Roluri/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+//Update
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("IdRol,Denumire_rol")] Roluri roluri)
@@ -152,11 +151,25 @@ namespace LearningProject.Controllers
                 return NotFound();
             }
 
+            // Obținem obiectul existent din baza de date
+            var rol = await _context.Roluri.FirstOrDefaultAsync(w => w.IdRol == id);
+
+            if (rol == null)
+            {
+                return NotFound();
+            }
+
             if (ModelState.IsValid)
             {
                 try
                 {
-                    _context.Update(roluri);
+                    // Actualizăm doar proprietățile care s-au schimbat
+                    rol.Denumire_rol = roluri.Denumire_rol;
+
+                    // Marcăm obiectul ca modificat
+                    _context.Update(rol);
+
+                    // Salvăm modificările în baza de date
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
@@ -172,8 +185,10 @@ namespace LearningProject.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
+
             return View(roluri);
         }
+
 
         // GET: Roluri/Delete/5
         public async Task<IActionResult> Delete(int? id)

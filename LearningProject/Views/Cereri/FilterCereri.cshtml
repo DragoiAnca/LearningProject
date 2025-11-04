@@ -1,0 +1,72 @@
+﻿@model IEnumerable<LearningProject.Models.Cereri>
+
+@{
+    ViewData["Title"] = "FilterCereri";
+}
+
+<!--Select option-->
+<div class="row justify-content-center mt-4">
+    <form method="get" asp-action="FilterCereri">
+        <select name="filter" onchange="this.form.submit()">
+            <option value="empty" selected><br /></option>
+            <option value="toate">Toate</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+        </select>
+    </form>
+</div>
+
+<br />
+
+<!--View (table) details about CERERI-->
+@if (Model != null && Model.Any())
+{
+    <table class="table table-bordered table-striped">
+        <thead class="table-light">
+            <tr>
+                <th>Nr. crt</th>
+                <th>Nume</th>
+                <th>Descriere</th>
+                <th>Creat de</th>
+                <th>Data creeare cerere</th>
+                <th>Șters de</th>
+                <th>Data stergere cerere</th>
+                <th>Status Cerere</th>
+                <th>Action btns</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.value</td>
+                    <td>@item.Name</td>
+                    <td>@item.Description</td>
+                    <td>@item.CreatedByUser</td>
+                    <td>@item.createdOn</td>
+                    <td>@item.Deleted</td>
+                    <td>@item.DeletedById</td>
+                    <td>
+                        @if (item.IsActive)
+                        {
+                            <span class="text-success fw-bold">Activă</span>
+                        }
+                        else
+                        {
+                            <span class="text-danger fw-bold">Inactivă</span>
+                        }
+                    </td>
+                    <td>
+                        <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
+                        <a asp-action="Details" asp-route-id ="@item.Id">Details</a> |
+                        <a asp-action="Delete" asp-route-itemid="@item.Id">Delete</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p class="text-muted">Nu există cereri pentru filtrul selectat.</p>
+}

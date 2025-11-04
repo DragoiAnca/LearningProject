@@ -1,0 +1,42 @@
+﻿@model IEnumerable<LearningProject.Models.ViewModels.UserDepartmentSorter>
+@{
+    ViewData["Title"] = "Details";
+    var departament = ViewData["DepartamentName"]?.ToString() ?? "necunoscut";
+    var departamentID = ViewData["DepartamentID"];
+
+}
+
+<h1>
+    <i class='fas fa-user-tie'></i>
+    Angajați <strong style="color: blue;">@departament</strong>
+</h1>
+
+<a asp-controller="GestionareDepartamente" asp-action="ViewAddNewUserDepartament" asp-route-id="@departamentID" class="btn btn-primary">
+    Adauga un angajat nou în @departament
+</a>
+
+
+@if (Model == null || !Model.Any())
+{
+    <div class="mb-3 d-flex justify-content-center">
+        <div class="card shadow-sm p-3 text-center" style="width: 300px; background-color: #f8f9fa; border-radius: 10px;">
+            <label class="mb-0" style="color: #6c757d; font-weight: 500; font-size: 1.1rem;">
+                &#128577;  Nu există angajați! Departament inactiv. <i class="fa-solid fa-person"></i>
+            </label>
+        </div>
+    </div>
+
+}
+else
+{
+    <ul class="list-group">
+        @foreach (var user in Model)
+        {
+            <li class="list-group-item">
+                @user.Name
+            </li>
+        }
+    </ul>
+}
+
+

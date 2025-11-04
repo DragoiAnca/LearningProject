@@ -1,0 +1,21 @@
+﻿@model IEnumerable<LearningProject.Models.Departamente>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+
+
+<div class="d-flex flex-wrap gap-2">
+    @foreach (var item in Model)
+    {
+        <a asp-action="Details" asp-route-id="@item.id_departamente" class="btn btn-primary">
+            @item.Denumire_departament
+        </a>
+    }
+</div>
