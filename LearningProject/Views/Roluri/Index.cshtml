@@ -4,34 +4,45 @@
     ViewData["Title"] = "Index";
 }
 
-<h1>Index</h1>
 
-<p>
-    <a asp-action="Create">Create New</a>
+<div class="container mt-4">
+    <div class="card shadow-lg border-0">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
 
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Denumire_rol)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Denumire_rol)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.IdRol">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.IdRol">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.IdRol">Delete</a>
-                <a asp-action="AssignClaims" asp-route-id="@item.IdRol">AssignClaims</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table>
+            <h4 class="mb-0">Vizualizare Roluri</h4>
+            <a asp-action="Create" class="btn btn-light btn-sm">
+                <i class="bi bi-plus-circle"></i> Adaugă Rol Nou
+            </a>
+        </div>
+
+
+        <div class="card-body">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>
+                            @Html.DisplayNameFor(model => model.Denumire_rol)
+                        </th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.Denumire_rol)
+                            </td>
+                            <td>
+                                <a asp-action="Edit" asp-route-id="@item.IdRol">Edit</a> |
+                                <a asp-action="Details" asp-route-id="@item.IdRol">Details</a> |
+                                <a asp-action="Delete" asp-route-id="@item.IdRol">Delete</a>
+                                <a asp-action="AssignClaims" asp-route-id="@item.IdRol">AssignClaims</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

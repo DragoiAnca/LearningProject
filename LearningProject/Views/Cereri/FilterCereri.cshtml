@@ -29,8 +29,8 @@
                 <th>Descriere</th>
                 <th>Creat de</th>
                 <th>Data creeare cerere</th>
-                <th>Șters de</th>
                 <th>Data stergere cerere</th>
+                <th>Sters de</th>
                 <th>Status Cerere</th>
                 <th>Action btns</th>
             </tr>
@@ -57,9 +57,12 @@
                         }
                     </td>
                     <td>
-                        <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                        <a asp-action="Details" asp-route-id ="@item.Id">Details</a> |
-                        <a asp-action="Delete" asp-route-itemid="@item.Id">Delete</a>
+                        <a asp-action="Edit" asp-route-id="@item.Id">Edit</a>
+                        @if (User.HasClaim(c => c.Value == "CereriDetails"))
+                        {
+                            <a asp-action="Details" asp-route-id="@item.Id">Details</a>
+                        }
+                        <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
                     </td>
                 </tr>
             }

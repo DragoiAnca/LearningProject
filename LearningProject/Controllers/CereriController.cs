@@ -1,6 +1,7 @@
 ﻿using LearningProject.Data;
 using LearningProject.Models;
 using LearningProject.Models.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +13,7 @@ using System.Threading.Tasks;
 
 namespace LearningProject.Controllers
 {
+    [Authorize(Roles = "CereriAcces")]
     public class CereriController : Controller
     {
         private readonly LearningProjectContext _context;
@@ -29,7 +31,7 @@ namespace LearningProject.Controllers
         }
 
 
-        public async Task<IActionResult> FilterCereri(string filter = "inactive")
+        public async Task<IActionResult> FilterCereri(string filter = "toate")
         {
             // Definim toate cele trei colecții
             var cereriInactive = _context.Cereri
@@ -71,6 +73,7 @@ namespace LearningProject.Controllers
         }
 
 
+        [Authorize(Roles = "CereriDetails")]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)

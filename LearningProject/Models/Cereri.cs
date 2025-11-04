@@ -1,4 +1,5 @@
 ﻿using LearningProject.Models;
+using System.ComponentModel.DataAnnotations;
 
 
 namespace LearningProject.Models
