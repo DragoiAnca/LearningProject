@@ -9,52 +9,88 @@
 <div class="container mt-4">
     <div class="card shadow-lg border-0">
         <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-            <h4 class="mb-0">Gestionare Claims</h4>
-            <a asp-action="Create" class="btn btn-light btn-sm">
-                <i class="bi bi-plus-circle"></i> Adaugă User Nou
-            </a>
+            <h4 class="mb-0">Gestionare Utilizatori</h4>
+
+
+            @if (User.IsInRole("UserCreate"))
+            {
+                <a asp-action="Create" class="btn btn-light btn-sm">
+                    <i class="bi bi-plus-circle"></i> Adaugă User Nou
+                </a>
+            }
         </div>
 
 
-    <div class="card-body">
+        <div class="card-body">
 
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>
-                        @Html.DisplayNameFor(model => model.Name)
-                    </th>
-                    <th>
-                        @Html.DisplayNameFor(model => model.Email)
-                    </th>
-                    <th>
-                        @Html.DisplayNameFor(model => model.id_departament)
-                    </th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in Model)
-                {
+            <table class="table">
+                <thead>
                     <tr>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.Name)
-                        </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.Email)
-                        </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.id_departament)
-                        </td>
-                        <td>
-                            <a asp-action="Edit" asp-route-id="@item.IdUser">Edit</a> |
-                            <a asp-action="Details" asp-route-id="@item.IdUser">Details</a> |
-                            <a asp-action="Delete" asp-route-id="@item.IdUser">Delete</a>
-                        </td>
+                        <th>
+                            @Html.DisplayNameFor(model => model.Name)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.Username)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.Email)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.id_departament)
+                        </th>
+                        <th></th>
                     </tr>
-                }
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr class="align-middle">
+                            <td>
+                                @Html.DisplayFor(modelItem => item.Name)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.Username)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.Email)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.id_departament)
+                            </td>
+                            <td>
+                                <div class="d-flex justify-content-center gap-2">
+                                    @if (User.IsInRole("UserEdit"))
+                                    {
+                                        <a asp-action="Edit" asp-route-id="@item.IdUser"
+                                           class="btn btn-outline-warning btn-sm"
+                                           data-bs-toggle="tooltip" title="Editează User">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </a>
+                                    }
+
+                                    @if (User.IsInRole("UserDetails"))
+                                    {
+                                        <a asp-action="Details" asp-route-id="@item.IdUser"
+                                           class="btn btn-outline-info btn-sm"
+                                           data-bs-toggle="tooltip" title="Vezi Detalii">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    }
+
+                                    @if (User.IsInRole("UserDelete"))
+                                    {
+                                        <a asp-action="Delete" asp-route-id="@item.IdUser"
+                                           class="btn btn-outline-danger btn-sm"
+                                           data-bs-toggle="tooltip" title="Șterge User">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
         </div>
     </div>
 </div>

@@ -4,6 +4,6 @@
     {
         public string Name {  get; set; }
 
-        public int departamentID { get; set; }
+        public int? departamentID { get; set; }
     }
 }

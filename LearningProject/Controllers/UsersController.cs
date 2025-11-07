@@ -1,7 +1,9 @@
-﻿using LearningProject.Data;
+﻿using Azure.Identity;
+using LearningProject.Data;
 using LearningProject.Models;
 using LearningProject.Services;
 using LearningProject.Services.Impl;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -19,13 +21,23 @@ namespace LearningProject.Controllers
             _context = context;
         }
 
+        // GET: Users/ViewTest
+        [HttpGet("/Users/ViewTest")]
+        public async Task<IActionResult> ViewTest()
+        {
+            var employees = await _context.V_employees.ToListAsync();
+            return Ok(employees);
+        }
+
         // GET: Users
+        [Authorize(Roles = "UserIndex")]
         [HttpGet("/Users")]
         public async Task<IActionResult> Index()
         {
             var users = await _usersService.GetAllUsersAsync();
             return View(users);
         }
+
 
         [HttpGet]
         public IActionResult GetAll()
@@ -35,6 +47,7 @@ namespace LearningProject.Controllers
         }
 
         // GET: Users/Details/5
+        [Authorize(Roles = "UserDetails")]
         [HttpGet("/Users/Details/{id}")]
         public async Task<IActionResult> Details(int id)
         {
@@ -46,6 +59,7 @@ namespace LearningProject.Controllers
         }
 
         // GET: Users/Create
+        [Authorize(Roles = "UserCreate")]
         [HttpGet("/Users/Create")]
         public IActionResult Create()
         {
@@ -54,14 +68,24 @@ namespace LearningProject.Controllers
             return View();
         }
 
+
         // POST: Users/Create
+        [Authorize(Roles = "UserCreate")]
         [HttpPost("/Users/Create")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Name,Email,id_departament")] User user)
+        public async Task<IActionResult> Create(User user)
         {
             // Citește manual rolul din form
             if (int.TryParse(Request.Form["roluriID"], out int rolId))
                 user.roluriID = rolId;
+
+
+            var my_user = await _context.User
+                    .FirstOrDefaultAsync(d => d.Username == user.Username);
+            if (my_user != null)
+            {
+                return BadRequest("Username already exists.");
+            }
 
             // Setează Departamentul
             if (user.id_departament != 0)
@@ -87,7 +111,58 @@ namespace LearningProject.Controllers
             return View(user);
         }
 
+        [Authorize(Roles = "UserGetTest")]
+        [HttpGet("/test")]
+
+        public async Task<IActionResult> GetTest(string autocompleteText)
+        {
+            var query = _context.V_employees.AsQueryable();
+
+
+            // filtrare doar dupa nume
+            if (!string.IsNullOrEmpty(autocompleteText))
+            {
+                string lower = autocompleteText.ToLower();
+                query = query
+                      .Where(e => e.FullName != null && e.FullName.ToLower().StartsWith(lower) ||
+                       e.EmployeeID != null && e.EmployeeID.ToLower().StartsWith(lower) ||
+                       e.Username != null && e.Username.ToLower().StartsWith(lower)
+                       );
+            }
+
+            var employees = await query
+                .Select(e => new { e.EmployeeID, e.FullName, e.Username }).Take(25)
+                .ToListAsync();
+
+            return Ok(employees);
+        }
+        [Authorize(Roles = "UserGetDetails")]
+        [HttpGet("/details")]
+        public async Task<IActionResult> GetDetails(string username)
+        {
+            if (string.IsNullOrWhiteSpace(username))
+                return BadRequest();
+
+            var employee = await _context.V_employees
+                .Where(e => e.Username == username)
+                .Select(e => new
+                {
+                    e.Username,
+                    e.EmployeeID,//marca
+                    e.FullName,
+                    e.Email,
+                })
+                .FirstOrDefaultAsync();
+
+            if (employee == null)
+                return NotFound();
+
+            return Ok(employee);
+        }
+
+
         // GET: Users/Edit/5
+        [Authorize(Roles = "UserEdit")]
         [HttpGet("/Users/Edit/{id}")]
         public async Task<IActionResult> Edit(int id)
         {
@@ -103,9 +178,11 @@ namespace LearningProject.Controllers
         }
 
         // POST: Users/Edit/5
+
+        [Authorize(Roles ="UserEdit")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id,  User user)
+        public async Task<IActionResult> Edit(int id, User user)
         {
             if (id != user.IdUser)
                 return NotFound();
@@ -150,11 +227,13 @@ namespace LearningProject.Controllers
 
 
             ViewData["id_departament"] = new SelectList(_context.Departamente, "id_departamente", "Denumire_departament", user.id_departament);
-            ViewData["roluriID"] = new SelectList( _context.Roluri,"IdRol","Denumire_rol",user.roluriID);
+            ViewData["roluriID"] = new SelectList(_context.Roluri, "IdRol", "Denumire_rol", user.roluriID);
             return View(user);
         }
 
         // GET: Users/Delete/5
+
+        [Authorize(Roles ="UserDelete")]
         [HttpGet("/Users/Delete/{id}")]
         public async Task<IActionResult> Delete(int id)
         {

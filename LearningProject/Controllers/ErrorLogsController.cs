@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using LearningProject.Data;
 using LearningProject.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace LearningProject.Controllers
 {
@@ -19,13 +15,13 @@ namespace LearningProject.Controllers
             _context = context;
         }
 
-        // GET: ErrorLogs
+        [Authorize(Roles = "ErrorLogsIndex")]
         public async Task<IActionResult> Index()
         {
             return View(await _context.ErrorLogs.ToListAsync());
         }
 
-        // GET: ErrorLogs/Details/5
+        [Authorize(Roles = "ErrorLogsDetails")]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -43,15 +39,13 @@ namespace LearningProject.Controllers
             return View(errorLog);
         }
 
-        // GET: ErrorLogs/Create
+        [Authorize(Roles = "ErrorLogsCreate")]
         public IActionResult Create()
         {
             return View();
         }
 
-        // POST: ErrorLogs/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        [Authorize(Roles = "ErrorLogsCreate")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,ErrorMessage,StackTrace,DateOccurred")] ErrorLog errorLog)
@@ -65,7 +59,7 @@ namespace LearningProject.Controllers
             return View(errorLog);
         }
 
-        // GET: ErrorLogs/Edit/5
+        [Authorize(Roles = "ErrorLogsEdit")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -81,9 +75,7 @@ namespace LearningProject.Controllers
             return View(errorLog);
         }
 
-        // POST: ErrorLogs/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        [Authorize(Roles = "ErrorLogsEdit")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,ErrorMessage,StackTrace,DateOccurred")] ErrorLog errorLog)
@@ -116,7 +108,7 @@ namespace LearningProject.Controllers
             return View(errorLog);
         }
 
-        // GET: ErrorLogs/Delete/5
+        [Authorize(Roles = "ErrorLogsDelete")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -134,7 +126,6 @@ namespace LearningProject.Controllers
             return View(errorLog);
         }
 
-        // POST: ErrorLogs/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)

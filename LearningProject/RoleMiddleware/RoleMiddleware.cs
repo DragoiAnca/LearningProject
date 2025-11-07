@@ -22,7 +22,7 @@ namespace LearningProject.RoleMiddleware
             {
                 var CurrentUserName = CurrentUser.Name.Replace("MMRMAKITA\\", "");
 
-                var AppUser = context.User.Where(x => x.Name == CurrentUserName).Include(x => x.roluri).ThenInclude(y => y.Claims).FirstOrDefault();
+                var AppUser = context.User.Where(x => x.Username == CurrentUserName).Include(x => x.roluri).ThenInclude(y => y.Claims).FirstOrDefault();
                     
 
                  if (AppUser != null)

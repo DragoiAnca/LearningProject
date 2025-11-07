@@ -1,79 +1,97 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 <head>
+    @RenderSection("Styles", required: false)
+
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - LearningProject</title>
+
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/LearningProject.styles.css" asp-append-version="true" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-
 </head>
 
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom  mb-3">
-            <div class="container-fluid">
+    <header class="border-bottom mb-4">
+        <div class="container py-2">
+            <ul class="nav nav-pills nav-fill">
 
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Proiect invatare</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
+                @if (User.IsInRole("HomeIndex"))
+                {
+                    <li class="nav-item">
+                        <a class="nav-link @(ViewContext.RouteData.Values["Controller"].ToString() == "Home" ? "done" : "")"
+                           asp-area="" asp-controller="Home" asp-action="Index">
+                            <i class="bi bi-feather"></i>
+                        </a>
+                    </li>
+                }
 
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Users" asp-action="Index">Users</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Roluri" asp-action="Index">Roluri</a>
-                        </li>
+                @if (User.IsInRole("UserIndex"))
+                {
+                    <li class="nav-item">
+                        <a class="nav-link pageBtndpd @(ViewContext.RouteData.Values["Controller"].ToString() == "Users" ? "done" : "")"
+                           asp-area="" asp-controller="Users" asp-action="Index">Users</a>
+                    </li>
+                }
 
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Claims" asp-action="Index">Gestionare Claims</a>
-                        </li>
+                @if (User.IsInRole("RoluriIndex"))
+                {
+                    <li class="nav-item">
+                        <a class="nav-link pageBtndpd @(ViewContext.RouteData.Values["Controller"].ToString() == "Roluri" ? "done" : "")"
+                           asp-area="" asp-controller="Roluri" asp-action="Index">Roluri</a>
+                    </li>
+                }
 
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="ErrorLogs" asp-action="Index">Vizualizare bugs</a>
-                        </li>
+                @if (User.IsInRole("ClaimsIndex"))
+                {
+                    <li class="nav-item">
+                        <a class="nav-link pageBtndpd @(ViewContext.RouteData.Values["Controller"].ToString() == "Claims" ? "done" : "")"
+                           asp-area="" asp-controller="Claims" asp-action="Index">Gestionare Claims</a>
+                    </li>
+                }
 
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="GestionareDepartamente" asp-action="Index">Gestionare Departamente</a>
-                        </li>
+                @if (User.IsInRole("GestionareDepartamenteIndex"))
+                {
+                    <li class="nav-item">
+                        <a class="nav-link pageBtndpd @(ViewContext.RouteData.Values["Controller"].ToString() == "GestionareDepartamente" ? "done" : "")"
+                           asp-area="" asp-controller="GestionareDepartamente" asp-action="Index">Departamente</a>
+                    </li>
 
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Cereri" asp-action="FilterCereri">Cereri</a>
-                        </li>
-
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Cereri" asp-action="Create">Creare cerere noua</a>
-                        </li>
-
-                    </ul>
-                </div>
-            </div>
-        </nav>
+                }
+                @if (User.IsInRole("CereriIndex"))
+                {
+                    <li class="nav-item">
+                        <a class="nav-link pageBtndpd @(ViewContext.RouteData.Values["Controller"].ToString() == "Cereri" ? "done" : "")"
+                           asp-area="" asp-controller="Cereri" asp-action="FilterCereri">Cereri</a>
+                    </li>
+                }
+            </ul>
+        </div>
     </header>
+
     <div class="container">
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2025 - LearningProject - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+    <footer class="border-top footer text-muted mt-4 py-3">
+        <div class="container text-center">
+            &copy; 2025 - LearningProject -
+            <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
         </div>
     </footer>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/ceapaluiJqueri.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
+
+
 
 </body>
 </html>

@@ -1,5 +1,6 @@
 using LearningProject.Models;
 using LearningProject.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 
@@ -16,6 +17,7 @@ namespace LearningProject.Controllers
             _errorLogger = errorLogger;
         }
 
+        [Authorize(Roles = "HomeIndex")]
         public IActionResult Index()
         {
             /*var User = HttpContext.User.Identities.FirstOrDefault();
@@ -38,11 +40,13 @@ namespace LearningProject.Controllers
             return View();
         }
 
+        [Authorize(Roles="HomePrivacy")]
         public IActionResult Privacy()
         {
             return View();
         }
 
+        [Authorize(Roles = "HomeError")]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {

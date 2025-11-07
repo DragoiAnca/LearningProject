@@ -4,72 +4,225 @@
     ViewData["Title"] = "FilterCereri";
 }
 
-<!--Select option-->
-<div class="row justify-content-center mt-4">
-    <form method="get" asp-action="FilterCereri">
-        <select name="filter" onchange="this.form.submit()">
-            <option value="empty" selected><br /></option>
-            <option value="toate">Toate</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-        </select>
-    </form>
+<div class="container mt-4">
+    <div class="card shadow-lg border-0">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            @if (User.IsInRole("CereriFilterCereri"))
+            {
+                <form id="filterForm">
+                    <select name="filter" id="filterSelect" onchange="loadFilteredCereri()">
+                        <option value="toate">Toate</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </form>
+            }
+
+            <div class="d-flex flex-row-reverse">
+                @if (User.IsInRole("CereriCreate"))
+                {
+                    <a asp-action="Create" class="btn btn-light btn-sm p-2" style="margin: 10px">
+                        <i class="bi bi-plus-circle"></i> Creare Cerere noua
+                    </a>
+                }
+
+                <button type="button"
+                        class="btn btn-success btn-sm p-2"
+                        style="margin: 10px"
+                        onclick="exportCereriExcel()">
+                    <i class="bi bi-file-earmark-excel"></i> Export Excel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <br />
+
+    <div id="ContainerTabel">
+        @if (Model != null && Model.Any())
+        {
+            <table class="table table-bordered table-striped">
+                <thead class="table-light">
+                    <tr>
+                        <th>Nr. crt</th>
+                        <th>Nume</th>
+                        <th>Descriere</th>
+                        <th>Creat de</th>
+                        <th>Data creeare cerere</th>
+                        <th>Data stergere cerere</th>
+                        <th>Sters de</th>
+                        <th>Status Cerere</th>
+                        <th>Action btns</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>@item.value</td>
+                            <td>@item.Name</td>
+                            <td>@item.Description</td>
+                            <td>@item.CreatedByUser?.Username</td>
+                            <td>@item.createdOn</td>
+                            <td>@item.Deleted</td>
+                            <td>@item.DeletedBy?.Username</td>
+                            <td>
+                                @if (item.IsActive)
+                                {
+                                    <span class="text-success fw-bold">Activă</span>
+                                }
+                                else
+                                {
+                                    <span class="text-danger fw-bold">Inactivă</span>
+                                }
+                            </td>
+                            <td>
+                                @if (User.IsInRole("CereriEdit"))
+                                {
+                                    <a asp-action="Edit" asp-route-id="@item.Id">Edit</a>
+                                }
+                                @if (User.HasClaim(c => c.Value == "CereriDetails"))
+                                {
+                                    <a asp-action="Details" asp-route-id="@item.Id">Details</a>
+                                }
+                                @if (User.IsInRole("CereriDelete"))
+                                {
+                                    <button class="btn btn-danger btn-sm openDeleteModal" data-id="@item.Id">
+                                        <i class="bi bi-trash"></i> Șterge
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+
+
+            <!-- Modal global -->
+            <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content" id="deleteModalContent"></div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <p class="text-muted">Nu există cereri pentru filtrul selectat.</p>
+        }
+    </div>
 </div>
 
-<br />
+@section Scripts {
+    @await Html.PartialAsync("_ValidationScriptsPartial")
 
-<!--View (table) details about CERERI-->
-@if (Model != null && Model.Any())
-{
-    <table class="table table-bordered table-striped">
-        <thead class="table-light">
-            <tr>
-                <th>Nr. crt</th>
-                <th>Nume</th>
-                <th>Descriere</th>
-                <th>Creat de</th>
-                <th>Data creeare cerere</th>
-                <th>Data stergere cerere</th>
-                <th>Sters de</th>
-                <th>Status Cerere</th>
-                <th>Action btns</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Model)
-            {
-                <tr>
-                    <td>@item.value</td>
-                    <td>@item.Name</td>
-                    <td>@item.Description</td>
-                    <td>@item.CreatedByUser</td>
-                    <td>@item.createdOn</td>
-                    <td>@item.Deleted</td>
-                    <td>@item.DeletedById</td>
-                    <td>
-                        @if (item.IsActive)
-                        {
-                            <span class="text-success fw-bold">Activă</span>
-                        }
-                        else
-                        {
-                            <span class="text-danger fw-bold">Inactivă</span>
-                        }
-                    </td>
-                    <td>
-                        <a asp-action="Edit" asp-route-id="@item.Id">Edit</a>
-                        @if (User.HasClaim(c => c.Value == "CereriDetails"))
-                        {
-                            <a asp-action="Details" asp-route-id="@item.Id">Details</a>
-                        }
-                        <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-                    </td>
-                </tr>
+    <script>
+        // Filtrare cereri
+        function loadFilteredCereri() {
+            const filter = document.getElementById("filterSelect").value;
+            const url = '@Url.Action("FilterCereriPartial")' + '?filter=' + filter;
+
+            fetch(url)
+                .then(res => res.text())
+                .then(html => {
+                    document.getElementById("ContainerTabel").innerHTML = html;
+                    attachDeleteModalEvents(); // IMPORTANT: Reatașăm evenimentele
+                })
+                .catch(err => console.error(err));
+        }
+
+
+        document.getElementById("filterForm")?.addEventListener("submit", e => {
+            e.preventDefault();
+            loadFilteredCereri();
+        });
+
+        // Deschide modalul de ștergere
+        function openDeleteModal(id) {
+            const url = '@Url.Action("GetDeleteModal", "Cereri")' + '?id=' + id;
+
+            fetch(url)
+                .then(res => res.text())
+                .then(html => {
+                    document.getElementById("deleteModalContent").innerHTML = html;
+                    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+                    modal.show();
+                })
+                .catch(err => console.error("Eroare la încărcarea modalului:", err));
+        }
+
+        // Atașează click la toate butoanele din tabel
+          function attachDeleteModalEvents() {
+              document.querySelectorAll(".openDeleteModal").forEach(btn => {
+                  btn.addEventListener("click", function() {
+                      const id = this.getAttribute("data-id");
+                      fetch('@Url.Action("GetDeleteModal", "Cereri")?id=' + id)
+                          .then(res => res.text())
+                          .then(html => {
+                              document.getElementById("deleteModalContent").innerHTML = html;
+                              attachModalDeleteEvent(); // butonul de confirmare
+                              new bootstrap.Modal(document.getElementById('deleteModal')).show();
+                          });
+                  });
+              });
+          }
+
+
+              // Atașează click la butonul de ștergere din modal
+        function attachModalDeleteEvent() {
+            const btn = document.querySelector("#deleteModalContent .btn-danger");
+            if(btn) {
+                btn.addEventListener("click", function() {
+                    const id = this.getAttribute("data-id");
+                    deleteCerere(id);
+                });
             }
-        </tbody>
-    </table>
-}
-else
-{
-    <p class="text-muted">Nu există cereri pentru filtrul selectat.</p>
+        }
+
+        // Inițializare la încărcarea paginii
+        document.addEventListener("DOMContentLoaded", function() {
+            attachDeleteModalEvents();
+        });
+
+        // Ștergere cerere
+        function deleteCerere(id) {
+            if (!confirm("Sigur dorești să ștergi această cerere?")) return;
+
+            fetch(`/Cereri/CerereStearsa/${id}`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "RequestVerificationToken": document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                }
+            })
+            .then(res => res.json())
+            .then(response => {
+                if (response.success) {
+                    // Închidem modalul
+                    const modalEl = document.getElementById('deleteModal');
+                    const modalInstance = bootstrap.Modal.getInstance(modalEl);
+                    if (modalInstance) {
+                        modalInstance.hide();
+                    }
+
+                    // Reîncărcăm tabelul
+                    loadFilteredCereri();
+                    alert(response.message);
+                } else {
+                    alert(response.message);
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Eroare la ștergere!");
+            });
+        }
+
+        // Export Excel
+        function exportCereriExcel() {
+            const filter = document.getElementById("filterSelect")?.value || 'toate';
+            const exportUrl = `@Url.Action("FilterCereri", "Cereri")?filter=${encodeURIComponent(filter)}&exportExcel=true`;
+            window.location.href = exportUrl;
+        }
+    </script>
 }

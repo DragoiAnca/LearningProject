@@ -4,18 +4,35 @@
     ViewData["Title"] = "Index";
 }
 
-<h1>Index</h1>
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
+<div class="container mt-4">
+    <div class="card shadow-lg border-0">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+
+            <h4 class="mb-0">Vizualizare toate departamentele</h4>
+
+            <p>
+                @if (User.IsInRole("GestionareDepartamenteCreate"))
+                {
+                    <a asp-action="Create" class="btn btn-light btn-sm">
+                        <i class="bi bi-plus-circle"></i>
+                        Creaza Departament Nou
+                    </a>
+                }
+            </p>
+        </div>
 
 
-<div class="d-flex flex-wrap gap-2">
-    @foreach (var item in Model)
-    {
-        <a asp-action="Details" asp-route-id="@item.id_departamente" class="btn btn-primary">
-            @item.Denumire_departament
-        </a>
-    }
+        <div class="d-flex flex-wrap gap-2 p-10" style="padding: 10px;">
+            @if (User.IsInRole("GestionareDepartamenteDetails"))
+            {
+                @foreach (var item in Model)
+                {
+                    <a asp-action="Details" asp-route-id="@item.id_departamente" class="btn btn-primary">
+                        @item.Denumire_departament
+                    </a>
+                }
+            }
+        </div>
+    </div>
 </div>

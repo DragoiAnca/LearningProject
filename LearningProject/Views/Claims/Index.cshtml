@@ -8,9 +8,15 @@
     <div class="card shadow-lg border-0">
         <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
             <h4 class="mb-0">Gestionare Claims</h4>
-            <a asp-action="Create" class="btn btn-light btn-sm">
-                <i class="bi bi-plus-circle"></i> Adaugă Claim
-            </a>
+
+
+            @if (User.IsInRole("ClaimsCreate"))
+            {
+                <a asp-action="Create" class="btn btn-light btn-sm">
+                    <i class="bi bi-plus-circle"></i> Adaugă Claim
+                </a>
+            }
+
         </div>
 
         <div class="card-body">
@@ -30,24 +36,36 @@
                                 <tr class="align-middle">
                                     <td class="py-3">@Html.DisplayFor(modelItem => item.name)</td>
                                     <td class="text-center">
+
                                         <div class="d-flex justify-content-center gap-2">
-                                            <a asp-action="Edit" asp-route-id="@item.IdClaim"
-                                               class="btn btn-outline-warning btn-sm"
-                                               data-bs-toggle="tooltip" title="Editează Claim">
-                                                <i class="bi bi-pencil-square"></i>
-                                            </a>
+                                            @if (User.IsInRole("ClaimsEdit"))
+                                            {
+                                                <a asp-action="Edit" asp-route-id="@item.IdClaim"
+                                                   class="btn btn-outline-warning btn-sm"
+                                                   data-bs-toggle="tooltip" title="Editează Claim">
+                                                    <i class="bi bi-pencil-square"></i>
+                                                </a>
+                                            }
 
-                                            <a asp-action="Details" asp-route-id="@item.IdClaim"
-                                               class="btn btn-outline-info btn-sm"
-                                               data-bs-toggle="tooltip" title="Vezi Detalii">
-                                                <i class="bi bi-eye"></i>
-                                            </a>
+                                            @if (User.IsInRole("ClaimsDetails"))
+                                            {
+                                                <a asp-action="Details" asp-route-id="@item.IdClaim"
+                                                   class="btn btn-outline-info btn-sm"
+                                                   data-bs-toggle="tooltip" title="Vezi Detalii">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
+                                            }
 
-                                            <a asp-action="Delete" asp-route-id="@item.IdClaim"
-                                               class="btn btn-outline-danger btn-sm"
-                                               data-bs-toggle="tooltip" title="Șterge Claim">
-                                                <i class="bi bi-trash"></i>
-                                            </a>
+
+                                            @if (User.IsInRole("ClaimsDelete"))
+                                            {
+                                                <a asp-action="Delete" asp-route-id="@item.IdClaim"
+                                                   class="btn btn-outline-danger btn-sm"
+                                                   data-bs-toggle="tooltip" title="Șterge Claim">
+                                                    <i class="bi bi-trash"></i>
+                                                </a>
+                                            }
+
                                         </div>
                                     </td>
                                 </tr>

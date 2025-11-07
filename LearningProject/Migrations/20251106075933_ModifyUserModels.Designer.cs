@@ -4,6 +4,7 @@ using LearningProject.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LearningProject.Migrations
 {
     [DbContext(typeof(LearningProjectContext))]
-    partial class LearningProjectContextModelSnapshot : ModelSnapshot
+    [Migration("20251106075933_ModifyUserModels")]
+    partial class ModifyUserModels
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -193,7 +196,7 @@ namespace LearningProject.Migrations
                     b.Property<DateTime>("data_time")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("id_departament")
+                    b.Property<int>("id_departament")
                         .HasColumnType("int");
 
                     b.Property<int>("roluriID")
@@ -301,7 +304,8 @@ namespace LearningProject.Migrations
                     b.HasOne("LearningProject.Models.Departamente", "Departamente")
                         .WithMany()
                         .HasForeignKey("id_departament")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("LearningProject.Models.Roluri", "roluri")
                         .WithMany("Users")

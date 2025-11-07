@@ -10,9 +10,14 @@
         <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
 
             <h4 class="mb-0">Vizualizare Roluri</h4>
-            <a asp-action="Create" class="btn btn-light btn-sm">
-                <i class="bi bi-plus-circle"></i> Adaugă Rol Nou
-            </a>
+
+
+            @if (User.IsInRole("RoluriCreate"))
+            {
+                <a asp-action="Create" class="btn btn-light btn-sm">
+                    <i class="bi bi-plus-circle"></i> Adaugă Rol Nou
+                </a>
+            }
         </div>
 
 
@@ -33,11 +38,45 @@
                             <td>
                                 @Html.DisplayFor(modelItem => item.Denumire_rol)
                             </td>
-                            <td>
-                                <a asp-action="Edit" asp-route-id="@item.IdRol">Edit</a> |
-                                <a asp-action="Details" asp-route-id="@item.IdRol">Details</a> |
-                                <a asp-action="Delete" asp-route-id="@item.IdRol">Delete</a>
-                                <a asp-action="AssignClaims" asp-route-id="@item.IdRol">AssignClaims</a>
+                            <td class="text-center">
+
+                                @if (User.IsInRole("RoluriEdit"))
+                                {
+                                    <a asp-action="Edit" asp-route-id="@item.IdRol"
+                                       class="btn btn-outline-warning btn-sm"
+                                       data-bs-toggle="tooltip" title="Editează Rol">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </a>
+                                }
+
+                                @if (User.IsInRole("RoluriViewAllUsernames"))
+                                {
+
+                                    <a asp-action="ViewAllUsernames" asp-route-id="@item.IdRol"
+                                       class="btn btn-outline-info btn-sm"
+                                       data-bs-toggle="tooltip" title="Vizualizeaza Claim">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                }
+
+
+                                @if (User.IsInRole("RoluriDelete"))
+                                {
+                                    <a asp-action="Delete" asp-route-id="@item.IdRol"
+                                       class="btn btn-outline-danger btn-sm"
+                                       data-bs-toggle="tooltip" title="Sterge Claim">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                }
+
+                                @if (User.IsInRole("RoluriAssignClaims"))
+                                {
+                                    <a asp-action="AssignClaims" asp-route-id="@item.IdRol"
+                                       class="btn btn-outline-success btn-sm"
+                                       data-bs-toggle="tooltip" title="Atribuie Claim">
+                                        <i class="bi bi-highlighter"></i>
+                                    </a>
+                                }
                             </td>
                         </tr>
                     }

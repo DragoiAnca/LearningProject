@@ -4,49 +4,66 @@
     ViewData["Title"] = "Create";
 }
 
-
 <div class="container mt-4">
     <div class="card shadow-lg border-0">
-
-        <div class="card-header bg-primary text-white d-flex justify-content-center align-items-center">
-            <h4 class="mb-0">Adauga user nou</h4>
+        <div class="card-header bg-primary text-white d-flex">
+            <h4 class="mb-0"><i class="bi bi-person-circle"></i> Adauga user nou</h4>
         </div>
 
-
-        <hr />
         <div class="card-body">
-            <div class="col-md-4">
-                <form asp-action="Create">
+            <div class="col-md-6">
+                <form asp-action="Create" method="post">
                     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
-                    <!-- Fără IdUser, nu se cere în form -->
+                    <!-- Username (autocomplete, used for filtering) -->
+                    <div class="form-group mb-3">
+                        <label for="searchField"><i class="bi bi-search"></i> Căutare angajat</label>
+                        <input type="text" id="searchField" class="form-control ui-autocomplete" placeholder="Marca / Username / Nume" />
+                        <input type="hidden" asp-for="Username" id="hiddenUsername" />
+                        <button type="button" id="editSearch" class="btn btn-link btn-sm" style="display:none;">Edit</button>
+                        <small class="form-text text-muted">
+                            Poți căuta după Marca, Username sau Nume.
+                        </small>
+                    </div>
 
-                    <div class="form-group">
-                        <label>Username</label>
-                        <input asp-for="Name" class="form-control" />
+                    <!-- Marca -->
+                    <div class="form-group mb-3">
+                        <label>Marca</label>
+                        <input type="text" id="employeeID" class="form-control" readonly />
+                        <input type="hidden" asp-for="EmployeeID" id="hiddenEmployeeID" />
+                        <span asp-validation-for="EmployeeID" class="text-danger"></span>
+                    </div>
+
+                    <!-- Full Name -->
+                    <div class="form-group mb-3">
+                        <label asp-for="Name" class="control-label">Nume complet</label>
+                        <input type="text" id="FullName" class="form-control" readonly />
+                        <input type="hidden" asp-for="Name" id="hiddenFullName" />
                         <span asp-validation-for="Name" class="text-danger"></span>
                     </div>
 
-                    <div class="form-group">
+                    <!-- Email -->
+                    <div class="form-group mb-3">
                         <label asp-for="Email" class="control-label"></label>
-                        <input asp-for="Email" class="form-control" />
+                        <input type="text" id="Email" class="form-control" readonly />
+                        <input type="hidden" asp-for="Email" id="hiddenEmail" />
                         <span asp-validation-for="Email" class="text-danger"></span>
                     </div>
 
-                    <div class="form-group">
-                        <label asp-for="id_departament" class="control-label"></label>
-                        <select asp-for="id_departament" class="form-control"
-                                asp-items="ViewBag.id_departament">
-                            <option value="">-- Selectează un departament --</option>
+                    <!-- Rol -->
+                    <div class="form-group mb-3">
+                        <label class="control-label">Denumire Rol</label>
+                        <select asp-for="roluriID" class="form-control" id="roluriID" asp-items="ViewBag.roluriID">
+                            <option value="">-- Selectează un rol --</option>
                         </select>
-                        <span asp-validation-for="id_departament" class="text-danger"></span>
+                        <span asp-validation-for="roluriID" class="text-danger"></span>
                     </div>
 
 
-                    <div class="form-group">
-                        <label asp-for="roluriID" class="control-label"></label>
-                        <select asp-for="roluriID" class="form-control"
-                                asp-items="ViewBag.roluriID">
+                    <!-- Departament -->
+                    <div class="form-group mb-3">
+                        <label class="control-label">Denumire Departament</label>
+                        <select asp-for="id_departament" class="form-control" id="id_departament" asp-items="ViewBag.id_departament">
                             <option value="">-- Selectează un rol --</option>
                         </select>
                         <span asp-validation-for="roluriID" class="text-danger"></span>
@@ -61,9 +78,99 @@
     </div>
 </div>
 
-
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+
+    <script>
+
+        $(document).ready(function () {
+
+            // Function to populate fields based on username
+            function populateFields(username) {
+                if (!username) return;
+
+                $.ajax({
+                    url: '/details',
+                    type: 'GET',
+                    dataType: 'json',
+                    data: { username: username },
+                    success: function (data) {
+                        if (data) {
+                            // Display fields
+                            $("#Email").val(data.email);
+                            $("#FullName").val(data.fullName);
+                            $("#employeeID").val(data.employeeID);
+
+                            // Hidden fields for POST
+                            $("#hiddenEmail").val(data.email);
+                            $("#hiddenFullName").val(data.fullName);
+                            $("#hiddenEmployeeID").val(data.employeeID);
+                            $("#hiddenUsername").val(username);
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("Error fetching details:", error);
+                    }
+                });
+            }
+
+            // Autocomplete for Username search
+            $("#searchField").autocomplete({
+                source: function (request, response) {
+                    $.ajax({
+                        url: '/test',
+                        type: 'GET',
+                        dataType: 'json',
+                        data: { autocompleteText: request.term },
+                        success: function (data) {
+                            response($.map(data, function (item) {
+                                return {
+                                    label: item.fullName + " (" + item.employeeID + ")",
+                                    value: item.username,
+                                    username: item.username
+                                };
+                            }));
+                        },
+                        error: function (xhr, status, error) {
+                            console.error("AJAX error:", error);
+                        }
+                    });
+                },
+                minLength: 2,
+                select: function (event, ui) {
+                    event.preventDefault();
+
+                    // Set search field value
+                    $("#searchField").val(ui.item.username);
+
+                    // Populate fields
+                    populateFields(ui.item.username);
+
+                    // Disable search input and show Edit button
+                    $("#searchField").prop("disabled", true);
+                    $("#editSearch").show();
+                }
+            });
+
+            // Edit button to reset search and fields
+            $("#editSearch").on("click", function () {
+                $("#searchField").prop("disabled", false).val("").focus();
+                $("#employeeID, #FullName, #Email").val("");
+                $("#hiddenEmployeeID, #hiddenFullName, #hiddenEmail, #hiddenUsername").val("");
+                $("#roluriID").val("");
+                $(this).hide();
+            });
+
+        });
+    </script>
+
+    <style>
+        input[readonly], select:disabled {
+            background-color: #f3f3f3;
+            cursor: not-allowed;
+            opacity: 0.85;
+        }
+    </style>
 }

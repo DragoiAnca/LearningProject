@@ -6,6 +6,8 @@ namespace LearningProject.Models
     {
        [Key]
        public int IdClaim { get; set; }
+
+       [Display(Name = "Denumire Claim")]
        public string name { get; set; }
        public ICollection<Roluri>? Roles { get; set; }
     }

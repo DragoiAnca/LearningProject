@@ -20,3 +20,31 @@ html {
 body {
   margin-bottom: 60px;
 }
+
+
+.ui-autocomplete {
+    z-index: 1051 !important; /* for modals or dropdowns */
+    background-color: white;
+    border-radius: 0.5rem;
+    border: 1px solid #ced4da;
+    max-height: 200px;
+    overflow-y: auto;
+}
+.ui-helper-hidden-accessible {
+    display: none !important;
+}
+
+
+
+.pageBtndpd {
+    font-size: 1.5rem !important;
+    color: black !important;
+    text-decoration: none !important;
+}
+
+    .pageBtndpd.done, .nav-link.done {
+        font-weight: bold;
+        color: lightslategrey !important;
+        border-bottom: 3px solid lightslategrey;
+        padding-bottom: 2px;
+    }

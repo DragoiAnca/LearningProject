@@ -23,7 +23,7 @@ namespace LearningProject.Controllers
         }
 
         // GET: Roluri
-       // [Authorize(Roles = "Junior")]
+        [Authorize(Roles = "RoluriIndex")]
         public async Task<IActionResult> Index()
         {
             return View(await _context.Roluri.ToListAsync());
@@ -31,9 +31,8 @@ namespace LearningProject.Controllers
 
         // GET: Roluri/Details/5
 
-        //[Authorize(Roles = "Junior")]
 
-
+        [Authorize(Roles = "RoluriAssignClaims")]
         // GET: Roluri/AssignClaims/5
         public async Task<IActionResult> AssignClaims(int id)
         {
@@ -60,6 +59,18 @@ namespace LearningProject.Controllers
             return View(vm);
         }
 
+        [Authorize(Roles = "RoluriViewAllUsernames")]
+        public async Task<IActionResult> ViewAllUsernames(int id)
+        {
+            var users = await _context.User
+                                      .Where(u => u.roluriID == id)
+                                      .ToListAsync();
+
+            return View(users);
+        }
+
+
+        [Authorize(Roles = "RoluriAssignClaims")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AssignClaims(RoleClaimsViewModel vm)
@@ -85,7 +96,7 @@ namespace LearningProject.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-
+        [Authorize(Roles = "RoluriDetails")]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -103,15 +114,13 @@ namespace LearningProject.Controllers
             return View(roluri);
         }
 
-        // GET: Roluri/Create
+        [Authorize(Roles = "RoluriCreate")]
         public IActionResult Create()
         {
             return View();
         }
 
-        // POST: Roluri/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        [Authorize(Roles = "RoluriCreate")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("IdRol,Denumire_rol")] Roluri roluri)
@@ -126,6 +135,7 @@ namespace LearningProject.Controllers
         }
 
         // GET: Roluri/Edit/5
+        [Authorize(Roles = "RoluriEdit")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -141,7 +151,8 @@ namespace LearningProject.Controllers
             return View(roluri);
         }
 
-//Update
+        //Update
+        [Authorize(Roles = "RoluriEdit")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("IdRol,Denumire_rol")] Roluri roluri)
@@ -189,7 +200,7 @@ namespace LearningProject.Controllers
             return View(roluri);
         }
 
-
+        [Authorize(Roles = "RoluriDelete")]
         // GET: Roluri/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {

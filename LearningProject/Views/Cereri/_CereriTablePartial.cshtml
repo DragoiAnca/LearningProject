@@ -1,0 +1,154 @@
+﻿@model IEnumerable<LearningProject.Models.Cereri>
+
+<div id="ContainerTabel">
+    @if (Model != null && Model.Any())
+    {
+        <table class="table table-bordered table-striped">
+            <thead class="table-light">
+                <tr>
+                    <th>Nr. crt</th>
+                    <th>Nume</th>
+                    <th>Descriere</th>
+                    <th>Creat de</th>
+                    <th>Data creeare cerere</th>
+                    <th>Data stergere cerere</th>
+                    <th>Sters de</th>
+                    <th>Status Cerere</th>
+                    <th>Acțiuni</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.value</td>
+                        <td>@item.Name</td>
+                        <td>@item.Description</td>
+                        <td>@item.CreatedByUser?.Username</td>
+                        <td>@item.createdOn</td>
+                        <td>@item.Deleted</td>
+                        <td>@item.DeletedBy?.Username</td>
+                        <td>
+                            @if (item.IsActive)
+                            {
+                                <span class="text-success fw-bold">Activă</span>
+                            }
+                            else
+                            {
+                                <span class="text-danger fw-bold">Inactivă</span>
+                            }
+                        </td>
+                        <td>
+                            @if (User.IsInRole("CereriEdit"))
+                            {
+                                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a>
+                            }
+                            @if (User.HasClaim(c => c.Value == "CereriDetails"))
+                            {
+                                <a asp-action="Details" asp-route-id="@item.Id">Details</a>
+                            }
+                            @if (User.IsInRole("CereriDelete"))
+                            {
+                                <button class="btn btn-danger btn-sm openDeleteModal" data-id="@item.Id">
+                                    <i class="bi bi-trash"></i> Șterge
+                                </button>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p class="text-muted">Nu există cereri pentru filtrul selectat.</p>
+    }
+</div>
+
+<!-- Modal global -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content" id="deleteModalContent"></div>
+    </div>
+</div>
+
+@section Scripts {
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+    <script>
+        // --- FILTRARE ---
+        function loadFilteredCereri() {
+            const filter = document.getElementById("filterSelect").value;
+            const url = '@Url.Action("FilterCereriPartial")' + '?filter=' + filter;
+
+            fetch(url)
+                .then(res => res.text())
+                .then(html => {
+                    document.getElementById("ContainerTabel").innerHTML = html;
+                    attachDeleteModalEvents(); // Reatașăm click-urile
+                })
+                .catch(err => console.error(err));
+        }
+
+        document.getElementById("filterForm")?.addEventListener("submit", e => {
+            e.preventDefault();
+            loadFilteredCereri();
+        });
+
+        // --- MODAL ȘTERGERE ---
+        function openDeleteModal(id) {
+            fetch('@Url.Action("GetDeleteModal", "Cereri")?id=' + id)
+                .then(res => res.text())
+                .then(html => {
+                    document.getElementById("deleteModalContent").innerHTML = html;
+                    attachModalDeleteEvent(); // atașăm click pe butonul din modal
+                    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+                });
+        }
+
+        function attachDeleteModalEvents() {
+            document.querySelectorAll(".openDeleteModal").forEach(btn => {
+                btn.addEventListener("click", function() {
+                    const id = this.getAttribute("data-id");
+                    openDeleteModal(id);
+                });
+            });
+        }
+
+        function attachModalDeleteEvent() {
+            const btn = document.querySelector("#deleteModalContent .btn-danger");
+            if(btn) {
+                const id = btn.getAttribute("data-id");
+                btn.addEventListener("click", () => deleteCerere(id));
+            }
+        }
+
+        function deleteCerere(id) {
+            if(!confirm("Sigur dorești să ștergi această cerere?")) return;
+
+            fetch(`/Cereri/CerereStearsa/${id}`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "RequestVerificationToken": document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                }
+            })
+            .then(res => res.json())
+            .then(response => {
+                if(response.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('deleteModal'))?.hide();
+                    loadFilteredCereri();
+                    alert(response.message);
+                } else {
+                    alert(response.message);
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Eroare la ștergere!");
+            });
+        }
+
+        // --- INIT ---
+        document.addEventListener("DOMContentLoaded", attachDeleteModalEvents);
+    </script>
+}

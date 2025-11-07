@@ -1,12 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using LearningProject.Data;
+using LearningProject.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using LearningProject.Data;
-using LearningProject.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace LearningProject.Controllers
 {
@@ -19,13 +20,13 @@ namespace LearningProject.Controllers
             _context = context;
         }
 
-        // GET: Claims
+        [Authorize(Roles = "ClaimsIndex")]
         public async Task<IActionResult> Index()
         {
             return View(await _context.Claim.ToListAsync());
         }
 
-        // GET: Claims/Details/5
+        [Authorize(Roles = "ClaimsDetails")]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -43,15 +44,13 @@ namespace LearningProject.Controllers
             return View(claim);
         }
 
-        // GET: Claims/Create
+        [Authorize(Roles = "ClaimsCreate")]
         public IActionResult Create()
         {
             return View();
         }
 
-        // POST: Claims/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        [Authorize(Roles = "ClaimsCreate")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("IdClaim,name")] Claim claim)
@@ -66,6 +65,7 @@ namespace LearningProject.Controllers
         }
 
         // GET: Claims/Edit/5
+        [Authorize(Roles = "ClaimsEdit")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -81,9 +81,8 @@ namespace LearningProject.Controllers
             return View(claim);
         }
 
-        // POST: Claims/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+
+        [Authorize(Roles = "ClaimsEdit")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("IdClaim,name")] Claim claim)
@@ -117,6 +116,7 @@ namespace LearningProject.Controllers
         }
 
         // GET: Claims/Delete/5
+        [Authorize(Roles = "ClaimsDelete")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
