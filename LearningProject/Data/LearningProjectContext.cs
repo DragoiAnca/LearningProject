@@ -20,8 +20,15 @@ namespace LearningProject.Data
         public DbSet<LearningProject.Models.ErrorLog> ErrorLogs { get; set; } = default!;
         public DbSet<LearningProject.Models.Cereri> Cereri { get; set; } = default!;
         public DbSet<LearningProject.Models.V_employees> V_employees { get; set; } = default!;
+
+        public DbSet<LearningProject.Models.Student> Students { get; set; }
+        public DbSet<LearningProject.Models.Enrollment> Enrollments { get; set; }
+        public DbSet<LearningProject.Models.Course> Courses { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            //modelBuilder.Conventions.Remove<PluralizingTableNameConvention>();
+
             base.OnModelCreating(modelBuilder);
 
             // User → Roluri (many-to-one)

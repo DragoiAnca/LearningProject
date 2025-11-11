@@ -1,4 +1,4 @@
-﻿@model IEnumerable<LearningProject.Models.Cereri>
+﻿@model LearningProject.Models.ViewModels.ViewModelPaginatedListCereri
 
 @{
     ViewData["Title"] = "FilterCereri";
@@ -9,13 +9,8 @@
         <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
             @if (User.IsInRole("CereriFilterCereri"))
             {
-                <form id="filterForm">
-                    <select name="filter" id="filterSelect" onchange="loadFilteredCereri()">
-                        <option value="toate">Toate</option>
-                        <option value="active">Active</option>
-                        <option value="inactive">Inactive</option>
-                    </select>
-                </form>
+                <!-- input hidden pentru sort -->
+                <input type="hidden" id="hiddeninput" name="currentSort" value="none">
             }
 
             <div class="d-flex flex-row-reverse">
@@ -38,29 +33,71 @@
 
     <br />
 
+    <!-- 🔹 Containerul unde se încarcă partial view-ul -->
     <div id="ContainerTabel">
-        @if (Model != null && Model.Any())
+        @if (Model.ListaCereriCuPaginatie != null && Model.ListaCereriCuPaginatie.Any())
         {
             <table class="table table-bordered table-striped">
                 <thead class="table-light">
                     <tr>
                         <th>Nr. crt</th>
-                        <th>Nume</th>
+                        <th scope="col" class="position-relative">
+
+                            <a href="#" class="text-decoration-none" onclick="loadFilteredCereri(1, '@(ViewData["NameSortParm"] ?? "name")')">
+                                Nume <i class="bi bi-arrow-down-up ms-1"></i>
+                            </a>
+
+                            <!-- Input filtrare Bootstrap Name Cereri-->
+                            <div class="input-group input-group-sm mt-1">
+                                <input type="text" class="form-control"
+                                       id="filterName"
+                                       placeholder="Caută..."
+                                       >
+                                <button class="btn btn-outline-secondary" type="button"
+                                        onclick="loadFilteredCereri(1, '@(ViewData["NameSortParm"] ?? "name")', document.getElementById('filterName').value)">
+                                    <i class="bi bi-search"></i>
+                                </button>
+                            </div>
+
+                        </th>
+
                         <th>Descriere</th>
-                        <th>Creat de</th>
-                        <th>Data creeare cerere</th>
-                        <th>Data stergere cerere</th>
-                        <th>Sters de</th>
-                        <th>Status Cerere</th>
-                        <th>Action btns</th>
+
+                        <th>
+                            <a href="#" onclick="loadFilteredCereri(1, '@(ViewData["CreatedBySortParm"] ?? "createdBy")')">
+                                Creat de:
+                            </a>
+                        </th>
+
+                        <th>
+                            <a href="#" onclick="loadFilteredCereri(1, '@(ViewData["CreatedOnSortParm"] ?? "createdOn")')">Data Creare:</a>
+                        </th>
+                        <th>
+                            <a href="#" onclick="loadFilteredCereri(1, '@(ViewData["IsActiveSortParm"] ?? "isActive")')">Data Stergere:</a>
+                        </th>
+                        <th>
+                            <a href="#" onclick="loadFilteredCereri(1, '@(ViewData["DeletedBySortParm"] ?? "deletedBy")')">Sters de:</a>
+                        </th>
+                        <th>
+                            <a href="#" onclick="loadFilteredCereri(1, '@(ViewData["StatusSortParam"] ?? "status")')">Status</a>
+                            <div class="mt-1">
+                                <select name="filter" id="filterSelect" onchange="loadFilteredCereri()">
+                                    <option value="toate">Toate</option>
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                </select>
+                            </div>
+                        </th>
+                        <th>Acțiuni btn</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var item in Model)
+                    @foreach (var item in Model.ListaCereriCuPaginatie)
                     {
                         <tr>
                             <td>@item.value</td>
                             <td>@item.Name</td>
+
                             <td>@item.Description</td>
                             <td>@item.CreatedByUser?.Username</td>
                             <td>@item.createdOn</td>
@@ -79,15 +116,21 @@
                             <td>
                                 @if (User.IsInRole("CereriEdit"))
                                 {
-                                    <a asp-action="Edit" asp-route-id="@item.Id">Edit</a>
+                                    <button class="btn btn-success btn-sm" onclick="openDetaliiModal(@item.Id)" data-id="@item.Id">
+                                        <i class="bi bi-search"></i>
+                                        Detalii
+                                    </button>
                                 }
                                 @if (User.HasClaim(c => c.Value == "CereriDetails"))
                                 {
-                                    <a asp-action="Details" asp-route-id="@item.Id">Details</a>
+                                    <button class="btn btn-primary btn-sm" onclick="openEditModal(@item.Id)" data-id="@item.Id">
+                                        <i class="bi bi-pencil-square"></i>
+                                        Edit
+                                    </button>
                                 }
                                 @if (User.IsInRole("CereriDelete"))
                                 {
-                                    <button class="btn btn-danger btn-sm openDeleteModal" data-id="@item.Id">
+                                    <button class="btn btn-danger btn-sm" onclick="openDeleteModal(@item.Id)" data-id="@item.Id">
                                         <i class="bi bi-trash"></i> Șterge
                                     </button>
                                 }
@@ -97,12 +140,39 @@
                 </tbody>
             </table>
 
+            <!-- PAGINARE -->
+            <div class="pagination mt-3 d-flex justify-content-center">
+                @if (Model.ListaCereriCuPaginatie.HasPreviousPage)
+                {
+                    <button class="btn btn-outline-primary" onclick="loadFilteredCereri(@(Model.ListaCereriCuPaginatie.PageIndex - 1))">
+                        &laquo; Anterior
+                    </button>
+                }
+                <span class="mx-5">Pagina @Model.ListaCereriCuPaginatie.PageIndex din @Model.ListaCereriCuPaginatie.TotalPages</span>
+                @if (Model.ListaCereriCuPaginatie.HasNextPage)
+                {
+                    <button class="btn btn-outline-primary" onclick="loadFilteredCereri(@(Model.ListaCereriCuPaginatie.PageIndex + 1))">
+                        Următor &raquo;
+                    </button>
+                }
+            </div>
 
+            <!-- Modale -->
+            <div class="modal fade" id="detaliiModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content" id="detaliiModalContent"></div>
+                </div>
+            </div>
 
-            <!-- Modal global -->
             <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog">
                     <div class="modal-content" id="deleteModalContent"></div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content" id="editModalContent"></div>
                 </div>
             </div>
         }
@@ -117,112 +187,76 @@
     @await Html.PartialAsync("_ValidationScriptsPartial")
 
     <script>
-        // Filtrare cereri
-        function loadFilteredCereri() {
-            const filter = document.getElementById("filterSelect").value;
-            const url = '@Url.Action("FilterCereriPartial")' + '?filter=' + filter;
-
+       
+        function loadFilteredCereri(pageNumber = 1, sort = null, searchString = '') {
+            const filter = document.getElementById("filterSelect")?.value ?? '';
+            const searchInput = document.getElementById("filterName")?.value ?? '';
+            const hiddenInput = document.getElementById("hiddeninput");
+            const sortOrder = (sort === null || sort === "none") ? filter : sort;
+            hiddenInput.value = sortOrder;
+            const search = searchString || searchInput;
+            const url = `@Url.Action("FilterCereriPartial", "Cereri")?pageNumber=${pageNumber}&sortOrder=${encodeURIComponent(sortOrder)}&searchString=${encodeURIComponent(searchInput)}`;
             fetch(url)
                 .then(res => res.text())
-                .then(html => {
-                    document.getElementById("ContainerTabel").innerHTML = html;
-                    attachDeleteModalEvents(); // IMPORTANT: Reatașăm evenimentele
-                })
+                .then(html => document.getElementById("ContainerTabel").innerHTML = html)
                 .catch(err => console.error(err));
         }
-
 
         document.getElementById("filterForm")?.addEventListener("submit", e => {
             e.preventDefault();
             loadFilteredCereri();
         });
 
-        // Deschide modalul de ștergere
         function openDeleteModal(id) {
-            const url = '@Url.Action("GetDeleteModal", "Cereri")' + '?id=' + id;
-
-            fetch(url)
+            fetch(`@Url.Action("GetDeleteModal", "Cereri")?id=${id}`)
                 .then(res => res.text())
                 .then(html => {
                     document.getElementById("deleteModalContent").innerHTML = html;
-                    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
-                    modal.show();
+                    new bootstrap.Modal(document.getElementById('deleteModal')).show();
                 })
-                .catch(err => console.error("Eroare la încărcarea modalului:", err));
+                .catch(err => console.error(err));
         }
 
-        // Atașează click la toate butoanele din tabel
-          function attachDeleteModalEvents() {
-              document.querySelectorAll(".openDeleteModal").forEach(btn => {
-                  btn.addEventListener("click", function() {
-                      const id = this.getAttribute("data-id");
-                      fetch('@Url.Action("GetDeleteModal", "Cereri")?id=' + id)
-                          .then(res => res.text())
-                          .then(html => {
-                              document.getElementById("deleteModalContent").innerHTML = html;
-                              attachModalDeleteEvent(); // butonul de confirmare
-                              new bootstrap.Modal(document.getElementById('deleteModal')).show();
-                          });
-                  });
-              });
-          }
-
-
-              // Atașează click la butonul de ștergere din modal
-        function attachModalDeleteEvent() {
-            const btn = document.querySelector("#deleteModalContent .btn-danger");
-            if(btn) {
-                btn.addEventListener("click", function() {
-                    const id = this.getAttribute("data-id");
-                    deleteCerere(id);
-                });
-            }
+        function openDetaliiModal(id) {
+            fetch(`@Url.Action("GetDetaliiModal", "Cereri")?id=${id}`)
+                .then(res => res.text())
+                .then(html => {
+                    document.getElementById("detaliiModalContent").innerHTML = html;
+                    new bootstrap.Modal(document.getElementById('detaliiModal')).show();
+                })
+                .catch(err => console.error(err));
         }
 
-        // Inițializare la încărcarea paginii
-        document.addEventListener("DOMContentLoaded", function() {
-            attachDeleteModalEvents();
-        });
+        function openEditModal(id) {
+            fetch(`@Url.Action("GetEditModal", "Cereri")?id=${id}`)
+                .then(res => res.text())
+                .then(html => {
+                    document.getElementById("editModalContent").innerHTML = html;
+                    new bootstrap.Modal(document.getElementById('editModal')).show();
+                })
+                .catch(err => console.error(err));
+        }
 
-        // Ștergere cerere
         function deleteCerere(id) {
-            if (!confirm("Sigur dorești să ștergi această cerere?")) return;
-
-            fetch(`/Cereri/CerereStearsa/${id}`, {
+            if (!confirm("Sigur dorești să dezactivezi această cerere?")) return;
+            fetch(`/Cereri/DeleteConfirmed?id=${id}`, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "RequestVerificationToken": document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
-                }
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id })
             })
             .then(res => res.json())
             .then(response => {
                 if (response.success) {
-                    // Închidem modalul
-                    const modalEl = document.getElementById('deleteModal');
-                    const modalInstance = bootstrap.Modal.getInstance(modalEl);
-                    if (modalInstance) {
-                        modalInstance.hide();
-                    }
-
-                    // Reîncărcăm tabelul
+                    bootstrap.Modal.getInstance(document.getElementById('deleteModal'))?.hide();
                     loadFilteredCereri();
-                    alert(response.message);
-                } else {
-                    alert(response.message);
-                }
+                } else console.warn(response.message);
             })
-            .catch(err => {
-                console.error(err);
-                alert("Eroare la ștergere!");
-            });
+            .catch(err => { console.error(err); alert("Eroare la dezactivare!"); });
         }
 
-        // Export Excel
         function exportCereriExcel() {
             const filter = document.getElementById("filterSelect")?.value || 'toate';
-            const exportUrl = `@Url.Action("FilterCereri", "Cereri")?filter=${encodeURIComponent(filter)}&exportExcel=true`;
-            window.location.href = exportUrl;
+            window.location.href = `@Url.Action("FilterCereri", "Cereri")?filter=${encodeURIComponent(filter)}&exportExcel=true`;
         }
     </script>
 }

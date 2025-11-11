@@ -1,15 +1,20 @@
 ﻿@model LearningProject.Models.Cereri
 
 
-<div class="modal-header">
-    <h5 class="modal-title">Confirmare ștergere</h5>
+<div class="modal-header flex-column align-items-start">
+    <h5 class="modal-title mb-1">
+        <i class="bi bi-trash me-2"></i>
+        Confirmare ștergere
+    </h5>
+    <p class="text-muted mb-0">
+        <small>Sters de: <strong>@Model.CreatedByUser?.Username</strong></small>
+    </p>
     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 </div>
+
+
 <div class="modal-body">
-    <p>Ești sigur că vrei să ștergi cererea <strong>@Model.Name</strong>?</p>
-    <p class="text-muted">
-        <small>Creată de: <strong>@Model.CreatedByUser?.Username</strong></small><br />
-    </p>
+    <p class="text-center">Ești sigur că vrei să ștergi cererea <strong>@Model.Name</strong>?</p>
 </div>
 <div class="modal-footer">
     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anulează</button>

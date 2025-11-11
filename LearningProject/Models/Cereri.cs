@@ -18,7 +18,6 @@ namespace LearningProject.Models
 
         public int? DeletedById { get; set; }
         public User? DeletedBy { get; set; }
-
         public double value { get; set; }
     }
 }

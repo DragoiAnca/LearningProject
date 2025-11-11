@@ -136,6 +136,7 @@ namespace LearningProject.Controllers
 
             return Ok(employees);
         }
+
         [Authorize(Roles = "UserGetDetails")]
         [HttpGet("/details")]
         public async Task<IActionResult> GetDetails(string username)

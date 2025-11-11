@@ -1,6 +1,7 @@
 ﻿using LearningProject.Data;
 using LearningProject.Models;
 using LearningProject.Models.ViewModels;
+using LearningProject.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -8,48 +9,77 @@ using Microsoft.EntityFrameworkCore;
 using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
 using System.Security.Claims;
+using LearningProject.Services.Impl;
 
 namespace LearningProject.Controllers
 {
     public class CereriController : Controller
     {
         private readonly LearningProjectContext _context;
+        private readonly ICereri _cereriService;
 
-        public CereriController(LearningProjectContext context)
+        public CereriController(LearningProjectContext context, ICereri cereriService)
         {
             _context = context;
+            _cereriService = cereriService;
         }
 
         [Authorize(Roles = "CereriIndex")]
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string sortOrder)
         {
-            var filterCereri = _context.Cereri.Where(x => x.IsActive == true).Include(c => c.CreatedByUser).Include(c => c.DeletedBy);
-            return View(await filterCereri.ToListAsync());
-        }
-
-        public IActionResult FilterCereriPartial(string filter)
-        {
-            IEnumerable<Cereri> cereri = _context.Cereri.AsEnumerable();
-
-            switch (filter)
+            ViewData["NameSortParm"] = String.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
+            ViewData["DateSortParm"] = sortOrder == "Date" ? "date_desc" : "Date";
+            var students = from s in _context.Students
+                           select s;
+            switch (sortOrder)
             {
-                case "active":
-                    cereri = cereri.Where(c => c.IsActive);
+                case "name_desc":
+                    students = students.OrderByDescending(s => s.LastName);
                     break;
-                case "inactive":
-                    cereri = cereri.Where(c => !c.IsActive);
+                case "Date":
+                    students = students.OrderBy(s => s.EnrollmentDate);
+                    break;
+                case "date_desc":
+                    students = students.OrderByDescending(s => s.EnrollmentDate);
                     break;
                 default:
+                    students = students.OrderBy(s => s.LastName);
                     break;
             }
+            return View(await students.AsNoTracking().ToListAsync());
+        }
 
-            return PartialView("_CereriTablePartial", cereri);
+        public async Task<IActionResult> FilterCereriPartial(
+     [FromQuery(Name = "searchString")] string? searchString,
+     [FromQuery] string? sortOrder,
+     [FromQuery] int? pageNumber)
+        {
+            var pagedCereri = await _cereriService.GetFilteredCereriAsync(
+                sortOrder,
+                pageNumber ?? 1,
+                3,
+                searchString
+            );
+
+            var viewModel = new ViewModelPaginatedListCereri
+            {
+                ListaCereriCuPaginatie = pagedCereri.ListaCereriCuPaginatie,
+                searchInput = searchString,
+                sortOrder = sortOrder,
+                pageNumber = pageNumber
+            };
+
+            return PartialView("_CereriTablePartial", viewModel);
         }
 
         [Authorize(Roles = "CereriFiltru")]
         [HttpGet]
-        public async Task<IActionResult> FilterCereri(string filter = "toate", bool exportExcel = false)
+        public async Task<IActionResult> FilterCereri(string filter = "toate", bool exportExcel = false, int pageNumber = 1)
         {
+            int pageSize = 3; // câte cereri pe pagină
+            var cereri = _context.Cereri.AsQueryable();
+
+
             var cereriInactive = _context.Cereri
                 .Where(x => x.IsActive == false)
                 .Include(c => c.CreatedByUser)
@@ -82,7 +112,9 @@ namespace LearningProject.Controllers
                     break;
             }
 
-            var cereri = await query.ToListAsync();
+          //  var cereri = await query.ToListAsync();
+            var cereriPaginate = await PaginatedList<Cereri>.CreateAsync(
+cereri.AsNoTracking(), pageNumber, pageSize);
 
             if (exportExcel)
             {
@@ -129,7 +161,15 @@ namespace LearningProject.Controllers
                     fileName);
             }
 
-            return View(cereri);
+            var viewModel = new ViewModelPaginatedListCereri
+            {
+                ListaCereriCuPaginatie = cereriPaginate,
+                searchInput = filter,
+                sortOrder = null,
+                pageNumber = pageNumber
+            };
+
+            return View(viewModel);
         }
 
         [Authorize(Roles = "CereriDetails")]
@@ -188,6 +228,26 @@ namespace LearningProject.Controllers
             return View(model);
         }
 
+
+        public IActionResult FilterCereriBy(string filter)
+        {
+            IEnumerable<Cereri> cereri = _context.Cereri.AsEnumerable();
+
+            switch (filter)
+            {
+                case "active":
+                    cereri = cereri.Where(c => c.IsActive);
+                    break;
+                case "inactive":
+                    cereri = cereri.Where(c => !c.IsActive);
+                    break;
+                default:
+                    break;
+            }
+
+            return PartialView("_CereriTablePartial", cereri);
+        }
+
         [Authorize(Roles = "CereriEdit")]
         public async Task<IActionResult> Edit(int? id)
         {
@@ -196,7 +256,7 @@ namespace LearningProject.Controllers
                 return NotFound();
             }
 
-            var cereri = await _context.Cereri.FindAsync(id);
+            var cereri = await _context.Cereri.Where(m=>m.Id==id && m.IsActive==true).FirstOrDefaultAsync();
             if (cereri == null)
             {
                 return NotFound();
@@ -206,42 +266,44 @@ namespace LearningProject.Controllers
             return View(cereri);
         }
 
+
+
         [Authorize(Roles = "CereriEdit")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Description,createdOn,IsActive,Deleted,CreatedByUserId,DeletedById,value")] Cereri cereri)
+        public async Task<IActionResult> Edit(int id, Cereri cereri)
         {
             if (id != cereri.Id)
-            {
                 return NotFound();
-            }
+
+            // ✅ Eliminăm erorile pentru CreatedByUser (nu se trimite din form)
+            ModelState.Remove(nameof(cereri.CreatedByUser));
 
             if (ModelState.IsValid)
             {
                 try
                 {
-                    _context.Update(cereri);
+                    _context.Update(cereri); // folosești direct obiectul din form
                     await _context.SaveChangesAsync();
+                    return RedirectToAction(nameof(FilterCereri));
                 }
                 catch (DbUpdateConcurrencyException)
                 {
                     if (!CereriExists(cereri.Id))
-                    {
                         return NotFound();
-                    }
                     else
-                    {
                         throw;
-                    }
                 }
-                return RedirectToAction(nameof(FilterCereri));
             }
+
+            // Refacem dropdownurile pentru view în caz de eroare
             ViewData["CreatedByUserId"] = new SelectList(_context.User, "IdUser", "Name", cereri.CreatedByUserId);
             ViewData["DeletedById"] = new SelectList(_context.User, "IdUser", "Name", cereri.DeletedById);
             return View(cereri);
         }
 
-       [Authorize(Roles = "CereriDelete")]
+
+        [Authorize(Roles = "CereriDelete")]
         public async Task<IActionResult> GetDeleteModal(int id)
         {
             var cereri = await _context.Cereri
@@ -257,9 +319,49 @@ namespace LearningProject.Controllers
             return PartialView("_DeleteModalPartial", cereri);
         }
 
-       [Authorize(Roles = "CereriDelete")]
+       [Authorize(Roles = "CereriEdit")]
+        public async Task<IActionResult> GetEditModal(int id)
+        {
+            var cereri = await _context.Cereri
+                .Include(c => c.CreatedByUser)
+                .Include(c => c.DeletedBy)
+                .FirstOrDefaultAsync(m => m.Id == id);
+
+            if (cereri == null)
+            {
+                return NotFound();
+            }
+
+            ViewData["CreatedByUserId"] = new SelectList(_context.User, "IdUser", "Name", cereri.CreatedByUserId);
+            ViewData["DeletedById"] = new SelectList(_context.User, "IdUser", "Name", cereri.DeletedById);
+
+            return PartialView("_EditModalPartial", cereri);
+        }
+
+
+
+        //[Authorize(Roles = "CereriEdit")]
+        public async Task<IActionResult> GetDetaliiModal(int id)
+        {
+            var cereri = await _context.Cereri
+                .Include(c => c.CreatedByUser)
+                .Include(c => c.DeletedBy)
+                .FirstOrDefaultAsync(m => m.Id == id);
+
+            if (cereri == null)
+            {
+                return NotFound();
+            }
+
+            ViewData["CreatedByUserId"] = new SelectList(_context.User, "IdUser", "Name", cereri.CreatedByUserId);
+            ViewData["DeletedById"] = new SelectList(_context.User, "IdUser", "Name", cereri.DeletedById);
+
+            return PartialView("_DetaliiModalPartial", cereri);
+        }
+
+        [Authorize(Roles = "CereriDelete")]
         [HttpPost]
-        [ValidateAntiForgeryToken]
+       // [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var cereri = await _context.Cereri.FindAsync(id);
@@ -275,7 +377,12 @@ namespace LearningProject.Controllers
                 await _context.SaveChangesAsync();
             }
 
-            return RedirectToAction(nameof(FilterCereri));
+            // 👉 în loc de RedirectToAction
+            return Ok(new
+            {
+                success = true,
+                message = "Cererea a fost dezactivată cu succes."
+            });
         }
 
 
@@ -310,8 +417,6 @@ namespace LearningProject.Controllers
                 return StatusCode(500, new { success = false, message = $"Eroare la ștergere: {ex.Message}" });
             }
         }
-
-
 
         private bool CereriExists(int id)
         {

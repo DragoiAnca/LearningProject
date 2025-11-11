@@ -17,6 +17,8 @@ builder.Services.AddControllersWithViews();
 
 // scoped to match  context lifecycle
 builder.Services.AddScoped<IClaimsTransformation, ClaimsTransformer>();
+builder.Services.AddScoped<ICereri, CereriService>();
+
 builder.Services.AddScoped<ErrorLoggerService>();
 builder.Services.AddScoped<IUsers, Users>();
 
