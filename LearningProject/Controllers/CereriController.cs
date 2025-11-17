@@ -1,7 +1,6 @@
 ﻿using LearningProject.Data;
 using LearningProject.Models;
 using LearningProject.Models.ViewModels;
-using LearningProject.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -22,6 +21,28 @@ namespace LearningProject.Controllers
         {
             _context = context;
             _cereriService = cereriService;
+        }
+
+        //search field - autofill
+        [HttpGet("/GetAutofill")]
+        public async Task<IActionResult> GetAutofill(string autocompleteText)
+        {
+            var query = _context.Cereri.AsQueryable();
+
+            // filtrare doar dupa denumire_cerere
+            if (!string.IsNullOrEmpty(autocompleteText))
+            {
+                string lower = autocompleteText.ToLower();
+                query = query
+                      .Where(e => e.Name != null && e.Name.ToLower().StartsWith(lower) 
+                       );
+            }
+
+            var name_cerere = await query
+                .Select(e => new { e.Name}).Distinct()
+                .ToListAsync();
+
+            return Ok(name_cerere);
         }
 
         [Authorize(Roles = "CereriIndex")]
@@ -52,13 +73,27 @@ namespace LearningProject.Controllers
         public async Task<IActionResult> FilterCereriPartial(
      [FromQuery(Name = "searchString")] string? searchString,
      [FromQuery] string? sortOrder,
-     [FromQuery] int? pageNumber)
+     [FromQuery] int? pageNumber,
+     [FromQuery] string? filter,
+     [FromQuery] int? nrCrt,
+     [FromQuery] string? description,
+     [FromQuery] string? creat_de,
+     [FromQuery] string? sters_de,
+     [FromQuery] DateTime? data_creare,
+     [FromQuery] DateTime? data_stergere)
         {
             var pagedCereri = await _cereriService.GetFilteredCereriAsync(
                 sortOrder,
                 pageNumber ?? 1,
                 3,
-                searchString
+                searchString,
+                filter,
+                nrCrt,
+                description,
+                creat_de,
+                sters_de,
+                data_creare,
+                data_stergere
             );
 
             var viewModel = new ViewModelPaginatedListCereri
@@ -66,7 +101,14 @@ namespace LearningProject.Controllers
                 ListaCereriCuPaginatie = pagedCereri.ListaCereriCuPaginatie,
                 searchInput = searchString,
                 sortOrder = sortOrder,
-                pageNumber = pageNumber
+                pageNumber = pageNumber,
+                filter_value = filter,
+                nrCrt = nrCrt,
+                descriere_value = description,
+                creat_de = creat_de,
+                sters_de = sters_de,
+                data_creare = data_creare,
+                data_stergere = data_stergere
             };
 
             return PartialView("_CereriTablePartial", viewModel);
@@ -76,52 +118,40 @@ namespace LearningProject.Controllers
         [HttpGet]
         public async Task<IActionResult> FilterCereri(string filter = "toate", bool exportExcel = false, int pageNumber = 1)
         {
-            int pageSize = 3; // câte cereri pe pagină
-            var cereri = _context.Cereri.AsQueryable();
-
-
-            var cereriInactive = _context.Cereri
-                .Where(x => x.IsActive == false)
+            int pageSize = 3;
+            var cereri = _context.Cereri
                 .Include(c => c.CreatedByUser)
-                .Include(c => c.DeletedBy);
+                .Include(c => c.DeletedBy)
+                .AsQueryable();
 
-            var cereriActive = _context.Cereri
-                .Where(x => x.IsActive == true)
-                .Include(c => c.CreatedByUser)
-                .Include(c => c.DeletedBy);
-
-            var toateCererile = _context.Cereri
-                .Include(c => c.CreatedByUser)
-                .Include(c => c.DeletedBy);
-
-            IQueryable<Cereri> query;
-
-            switch (filter.ToLower())
+            // 🔸 Aplicăm filtrul
+            switch (filter)
             {
                 case "active":
-                    query = cereriActive;
+                    cereri = cereri.Where(c => c.IsActive);
                     break;
-
                 case "inactive":
-                    query = cereriInactive;
+                    cereri = cereri.Where(c => !c.IsActive);
                     break;
-
                 case "toate":
                 default:
-                    query = toateCererile;
+                    // fără filtrare
                     break;
             }
 
-          //  var cereri = await query.ToListAsync();
-            var cereriPaginate = await PaginatedList<Cereri>.CreateAsync(
-cereri.AsNoTracking(), pageNumber, pageSize);
+            // 🔸 Sortează descrescător după Id
+            cereri = cereri.OrderByDescending(c => c.Id);
 
+            // 🔹 Paginare
+            var cereriPaginate = await PaginatedList<Cereri>.CreateAsync(
+                cereri.AsNoTracking(), pageNumber, pageSize);
+
+            // 🔹 Export Excel
             if (exportExcel)
             {
                 IWorkbook workbook = new XSSFWorkbook();
                 ISheet sheet = workbook.CreateSheet("Cereri");
 
-                // Header
                 IRow headerRow = sheet.CreateRow(0);
                 headerRow.CreateCell(0).SetCellValue("Nr. CRT");
                 headerRow.CreateCell(1).SetCellValue("Denumire Cerere");
@@ -132,7 +162,6 @@ cereri.AsNoTracking(), pageNumber, pageSize);
                 headerRow.CreateCell(6).SetCellValue("Șters de");
                 headerRow.CreateCell(7).SetCellValue("Status Cerere");
 
-                // Date
                 int rowIndex = 1;
                 foreach (var c in cereri)
                 {
@@ -155,19 +184,26 @@ cereri.AsNoTracking(), pageNumber, pageSize);
                 workbook.Close();
 
                 string fileName = $"Cereri_{filter}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
-
                 return File(exportData.ToArray(),
                     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     fileName);
             }
 
+            // 🔹 Construim ViewModel-ul
             var viewModel = new ViewModelPaginatedListCereri
             {
                 ListaCereriCuPaginatie = cereriPaginate,
-                searchInput = filter,
-                sortOrder = null,
+                filter_value = filter,
                 pageNumber = pageNumber
             };
+
+            // 🔹 Populăm opțiunile pentru dropdown
+            ViewBag.FilterOptions = new List<SelectListItem>
+    {
+        new SelectListItem { Text = "Toate", Value = "toate", Selected = (filter == "toate") },
+        new SelectListItem { Text = "Active", Value = "active", Selected = (filter == "active") },
+        new SelectListItem { Text = "Inactive", Value = "inactive", Selected = (filter == "inactive") }
+    };
 
             return View(viewModel);
         }
@@ -175,22 +211,18 @@ cereri.AsNoTracking(), pageNumber, pageSize);
         [Authorize(Roles = "CereriDetails")]
         public async Task<IActionResult> Details(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            var cerere = _context.Cereri
+         .Include(c => c.CreatedByUser)
+         .Include(c => c.DeletedBy)
+         .Include(c => c.Documente) // Include semnăturile
+         .ThenInclude(s => s.SignByUser)
+         .Include(c => c.Documente)
+         .ThenInclude(s => s.ClaimCanSign)
+         .FirstOrDefault(c => c.Id == id);
 
-            var cereri = await _context.Cereri
-                .Include(c => c.CreatedByUser)
-                .Include(c => c.DeletedBy)
-                .FirstOrDefaultAsync(m => m.Id == id);
+            if (cerere == null) return NotFound();
 
-            if (cereri == null)
-            {
-                return NotFound();
-            }
-
-            return View(cereri);
+            return View(cerere);
         }
 
         [Authorize(Roles = "CereriCreate")]
@@ -202,32 +234,54 @@ cereri.AsNoTracking(), pageNumber, pageSize);
             return View();
         }
 
-        [Authorize(Roles = "CereriCreate")]
+       // [Authorize(Roles = "Checker,Manager")]
         [HttpPost]
-        public async Task<IActionResult> Create(CreateNewCerereModel model)
+        public async Task<IActionResult> SignCerere(int cerereId, int signatureId, bool sign)
         {
-            if (ModelState.IsValid)
-            {
-                var userNameClaim = User.FindFirstValue(ClaimTypes.Name);
-                var CurrentUserName = userNameClaim.Replace("MMRMAKITA\\", "");
-                var user = await _context.User.FirstOrDefaultAsync(w => w.Username == CurrentUserName);
+            var userNameClaim = User.FindFirstValue(ClaimTypes.Name);
+            var currentUserName = userNameClaim.Replace("MMRMAKITA\\", "");
+            var user = await _context.User.FirstOrDefaultAsync(u => u.Username == currentUserName);
 
-                var cerere = new Cereri
-                {
-                    Name = model.Name,
-                    Description = model.Description,
-                    createdOn = DateTime.Now,
-                    IsActive = true,
-                    CreatedByUser = user,
-                    value = (double)model.Value
-                };
-                _context.Cereri.Add(cerere);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(FilterCereri));
-            }
-            return View(model);
+            if (user == null)
+                return Unauthorized("Utilizatorul curent nu a fost găsit în baza de date.");
+
+            var signature = await _context.Signatures
+                .Include(s => s.Cerere)
+                .Include(s => s.ClaimCanSign)
+                .FirstOrDefaultAsync(s => s.Id == signatureId && s.CerereId == cerereId);
+
+            if (signature == null)
+                return NotFound("Semnătura nu a fost găsită pentru această cerere.");
+
+            signature.Status = sign ? StatusDocument.Semnat : StatusDocument.Refuzat;
+            signature.DataSemnarii = DateTime.Now;
+            signature.SignByUserId = user.IdUser;
+
+            _context.Update(signature);
+            await _context.SaveChangesAsync();
+
+
+            return RedirectToAction("FilterCereri");
         }
 
+
+        [Authorize(Roles = "CereriCreate")]
+        [HttpPost]
+        public async Task<IActionResult> Create(CreateNewCerereModel model)// description, name, value
+        {
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var currentUserName = User.FindFirstValue(ClaimTypes.Name)
+                .Replace("MMRMAKITA\\", "");
+
+            var cerere = await _cereriService.CreateCerereAsync(model, currentUserName);
+
+
+
+            // Daca vine din form MVC
+            return RedirectToAction("FilterCereri");
+        }
 
         public IActionResult FilterCereriBy(string filter)
         {
@@ -265,8 +319,6 @@ cereri.AsNoTracking(), pageNumber, pageSize);
             ViewData["DeletedById"] = new SelectList(_context.User, "IdUser", "Name", cereri.DeletedById);
             return View(cereri);
         }
-
-
 
         [Authorize(Roles = "CereriEdit")]
         [HttpPost]
@@ -344,9 +396,13 @@ cereri.AsNoTracking(), pageNumber, pageSize);
         public async Task<IActionResult> GetDetaliiModal(int id)
         {
             var cereri = await _context.Cereri
-                .Include(c => c.CreatedByUser)
-                .Include(c => c.DeletedBy)
-                .FirstOrDefaultAsync(m => m.Id == id);
+                  .Include(c => c.CreatedByUser)                 
+                  .Include(c => c.DeletedBy)                      
+                  .Include(c => c.Documente)                    
+                      .ThenInclude(d => d.ClaimCanSign)         
+                  .Include(c => c.Documente)
+                      .ThenInclude(d => d.SignByUser)           
+                  .FirstOrDefaultAsync(m => m.Id == id);
 
             if (cereri == null)
             {
@@ -422,5 +478,9 @@ cereri.AsNoTracking(), pageNumber, pageSize);
         {
             return _context.Cereri.Any(e => e.Id == id);
         }
+
+
+       
+
     }
 }

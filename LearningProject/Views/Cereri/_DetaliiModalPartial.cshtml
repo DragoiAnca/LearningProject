@@ -61,11 +61,89 @@
 
                 <dt class="text-secondary">Valoare:</dt>
                 <dd>@Html.DisplayFor(model => model.value)</dd>
+
+
+                <!--Integrare semnaturi-->
+
+                <div class="d-flex justify-content-center mt-4">
+                    <div class="card text-center">
+                        <h5 class="card-header fw-bold">Semnături</h5>
+                        <div class="card-body">
+
+                            <div class="d-flex justify-content-center align-items-center">
+                                @{
+                                    var documenteOrdinate = Model.Documente.OrderBy(x => x.order).ToList();
+                                }
+
+                                @foreach (var s in documenteOrdinate)
+                                {
+                                    <div class="p-2 text-center">
+                                        <div>@s.ClaimCanSign.name</div>
+
+                                        @* Status semnătură *@
+                                        <div class="mb-2">
+                                            @if (s.Status == StatusDocument.Semnat)
+                                            {
+                                                <span class="badge bg-success">Semnat</span>
+                                            }
+                                            else if (s.Status == StatusDocument.Refuzat)
+                                            {
+                                                <span class="badge bg-danger">Refuzat</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">Ne-semnat</span>
+                                            }
+                                        </div>
+
+                                        @{
+                                            var beforeCurrent = documenteOrdinate
+                                            .Where(d => d.order < s.order)
+                                            .ToList();
+
+                                            bool canAct = beforeCurrent.All(d => d.Status == StatusDocument.Semnat);
+                                            bool alreadyHandled = s.Status == StatusDocument.Semnat || s.Status == StatusDocument.Refuzat;
+
+                                        }
+
+                                        @if (canAct && !alreadyHandled && Model.IsActive)
+                                        {
+                                            <div class="d-flex justify-content-center gap-2">
+                                                @* Buton Semneaza *@
+                                                <form asp-action="SignCerere" method="post">
+                                                    <input type="hidden" name="cerereId" value="@Model.Id" />
+                                                    <input type="hidden" name="signatureId" value="@s.Id" />
+                                                    <input type="hidden" name="sign" value="true" />
+
+                                                    <button type="submit" class="btn btn-primary btn-sm">
+                                                        Semneaza
+                                                    </button>
+                                                </form>
+
+                                                @* Buton Refuza *@
+                                                <form asp-action="SignCerere" method="post">
+                                                    <input type="hidden" name="cerereId" value="@Model.Id" />
+                                                    <input type="hidden" name="signatureId" value="@s.Id" />
+                                                    <input type="hidden" name="sign" value="false" />
+
+                                                    <button type="submit" class="btn btn-danger btn-sm">
+                                                        Refuza
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        }
+                                    </div>
+
+                                    @if (s != documenteOrdinate.Last())
+                                    {
+                                        <div class="vr mx-2"></div>
+                                    }
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </dl>
         </div>
     </div>
 </div>
-
-
-
-

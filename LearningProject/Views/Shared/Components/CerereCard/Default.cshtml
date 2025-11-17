@@ -1,0 +1,25 @@
+﻿@model IEnumerable<LearningProject.Models.Cereri>
+
+<div class="row">
+    @if (Model != null && Model.Any())
+    {
+        foreach (var cerere in Model)
+        {
+            <div class="col-md-4">
+                <div class="card mb-3"
+                     style="width: 18rem; background-color:@(cerere.IsActive ? "#d4edda" : "#f8d7da"); color:@(cerere.IsActive ? "#155724" : "#721c24");">
+                    <div class="card-body">
+                        <h5 class="card-title">@cerere.Name</h5>
+                        <p class="card-text">@cerere.Description</p>
+                        <p class="card-text"><small>Created: @cerere.createdOn.ToString("dd/MM/yyyy")</small></p>
+                        <p class="card-text">Value: @cerere.value.ToString("C")</p>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <p>No data available.</p>
+    }
+</div>

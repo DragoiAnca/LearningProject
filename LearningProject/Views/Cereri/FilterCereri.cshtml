@@ -32,231 +32,214 @@
     </div>
 
     <br />
+</div>
 
-    <!-- 🔹 Containerul unde se încarcă partial view-ul -->
-    <div id="ContainerTabel">
-        @if (Model.ListaCereriCuPaginatie != null && Model.ListaCereriCuPaginatie.Any())
-        {
-            <table class="table table-bordered table-striped">
-                <thead class="table-light">
-                    <tr>
-                        <th>Nr. crt</th>
-                        <th scope="col" class="position-relative">
 
-                            <a href="#" class="text-decoration-none" onclick="loadFilteredCereri(1, '@(ViewData["NameSortParm"] ?? "name")')">
-                                Nume <i class="bi bi-arrow-down-up ms-1"></i>
-                            </a>
 
-                            <!-- Input filtrare Bootstrap Name Cereri-->
-                            <div class="input-group input-group-sm mt-1">
-                                <input type="text" class="form-control"
-                                       id="filterName"
-                                       placeholder="Caută..."
-                                       >
-                                <button class="btn btn-outline-secondary" type="button"
-                                        onclick="loadFilteredCereri(1, '@(ViewData["NameSortParm"] ?? "name")', document.getElementById('filterName').value)">
-                                    <i class="bi bi-search"></i>
-                                </button>
-                            </div>
-
-                        </th>
-
-                        <th>Descriere</th>
-
-                        <th>
-                            <a href="#" onclick="loadFilteredCereri(1, '@(ViewData["CreatedBySortParm"] ?? "createdBy")')">
-                                Creat de:
-                            </a>
-                        </th>
-
-                        <th>
-                            <a href="#" onclick="loadFilteredCereri(1, '@(ViewData["CreatedOnSortParm"] ?? "createdOn")')">Data Creare:</a>
-                        </th>
-                        <th>
-                            <a href="#" onclick="loadFilteredCereri(1, '@(ViewData["IsActiveSortParm"] ?? "isActive")')">Data Stergere:</a>
-                        </th>
-                        <th>
-                            <a href="#" onclick="loadFilteredCereri(1, '@(ViewData["DeletedBySortParm"] ?? "deletedBy")')">Sters de:</a>
-                        </th>
-                        <th>
-                            <a href="#" onclick="loadFilteredCereri(1, '@(ViewData["StatusSortParam"] ?? "status")')">Status</a>
-                            <div class="mt-1">
-                                <select name="filter" id="filterSelect" onchange="loadFilteredCereri()">
-                                    <option value="toate">Toate</option>
-                                    <option value="active">Active</option>
-                                    <option value="inactive">Inactive</option>
-                                </select>
-                            </div>
-                        </th>
-                        <th>Acțiuni btn</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var item in Model.ListaCereriCuPaginatie)
-                    {
-                        <tr>
-                            <td>@item.value</td>
-                            <td>@item.Name</td>
-
-                            <td>@item.Description</td>
-                            <td>@item.CreatedByUser?.Username</td>
-                            <td>@item.createdOn</td>
-                            <td>@item.Deleted</td>
-                            <td>@item.DeletedBy?.Username</td>
-                            <td>
-                                @if (item.IsActive)
-                                {
-                                    <span class="text-success fw-bold">Activă</span>
-                                }
-                                else
-                                {
-                                    <span class="text-danger fw-bold">Inactivă</span>
-                                }
-                            </td>
-                            <td>
-                                @if (User.IsInRole("CereriEdit"))
-                                {
-                                    <button class="btn btn-success btn-sm" onclick="openDetaliiModal(@item.Id)" data-id="@item.Id">
-                                        <i class="bi bi-search"></i>
-                                        Detalii
-                                    </button>
-                                }
-                                @if (User.HasClaim(c => c.Value == "CereriDetails"))
-                                {
-                                    <button class="btn btn-primary btn-sm" onclick="openEditModal(@item.Id)" data-id="@item.Id">
-                                        <i class="bi bi-pencil-square"></i>
-                                        Edit
-                                    </button>
-                                }
-                                @if (User.IsInRole("CereriDelete"))
-                                {
-                                    <button class="btn btn-danger btn-sm" onclick="openDeleteModal(@item.Id)" data-id="@item.Id">
-                                        <i class="bi bi-trash"></i> Șterge
-                                    </button>
-                                }
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-
-            <!-- PAGINARE -->
-            <div class="pagination mt-3 d-flex justify-content-center">
-                @if (Model.ListaCereriCuPaginatie.HasPreviousPage)
-                {
-                    <button class="btn btn-outline-primary" onclick="loadFilteredCereri(@(Model.ListaCereriCuPaginatie.PageIndex - 1))">
-                        &laquo; Anterior
-                    </button>
-                }
-                <span class="mx-5">Pagina @Model.ListaCereriCuPaginatie.PageIndex din @Model.ListaCereriCuPaginatie.TotalPages</span>
-                @if (Model.ListaCereriCuPaginatie.HasNextPage)
-                {
-                    <button class="btn btn-outline-primary" onclick="loadFilteredCereri(@(Model.ListaCereriCuPaginatie.PageIndex + 1))">
-                        Următor &raquo;
-                    </button>
-                }
-            </div>
-
-            <!-- Modale -->
-            <div class="modal fade" id="detaliiModal" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog">
-                    <div class="modal-content" id="detaliiModalContent"></div>
-                </div>
-            </div>
-
-            <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog">
-                    <div class="modal-content" id="deleteModalContent"></div>
-                </div>
-            </div>
-
-            <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog">
-                    <div class="modal-content" id="editModalContent"></div>
-                </div>
-            </div>
-        }
-        else
-        {
-            <p class="text-muted">Nu există cereri pentru filtrul selectat.</p>
-        }
-    </div>
+<!-- 🔹 Containerul unde se încarcă partial view-ul -->
+<div id="ContainerTabel">
 </div>
 
 @section Scripts {
     @await Html.PartialAsync("_ValidationScriptsPartial")
 
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
     <script>
-       
-        function loadFilteredCereri(pageNumber = 1, sort = null, searchString = '') {
-            const filter = document.getElementById("filterSelect")?.value ?? '';
-            const searchInput = document.getElementById("filterName")?.value ?? '';
-            const hiddenInput = document.getElementById("hiddeninput");
+
+                // Call on page load
+
+        window.addEventListener('DOMContentLoaded', () => {
+                loadFilteredInputs(); });
+
+            function initializeAutocomplete() {
+                $("#searchField").autocomplete({
+                    source: function (request, response) {
+                        $.ajax({
+                            url: '/GetAutofill',
+                            type: 'GET',
+                            dataType: 'json',
+                            data: { autocompleteText: request.term },
+                            success: function (data) {
+                                response($.map(data, function (item) {
+                                    return { label: item.name, value: item.name };
+                                }));
+                            },
+                            error: function (xhr, status, error) {
+                                console.error("AJAX error:", error);
+                            }
+                        });
+                    },
+                    minLength: 2,
+                    select: function (event, ui) {
+                        event.preventDefault();
+                        $("#searchField").val(ui.item.value);
+                        // Reîncarcă tabela folosind search-ul selectat
+                        loadFilteredInputs(1, null, ui.item.value);
+                    }
+                });
+                                }
+
+
+           function checkSign(id) {
+            var statusSpan = document.getElementById('status-' + id);
+
+            $.ajax({
+                url: '/Cereri/GetBoolIfSign', // înlocuiește [ControllerName] cu numele controllerului tău
+                type: 'GET',
+                data: { id_cerere: id },
+                success: function(data){
+                    // aici presupunem că data are un câmp isSigned
+                    if (data.isSigned !== undefined) {
+                        statusSpan.textContent = data.isSigned ? "Semnat" : "Nesemnat";
+                    } else {
+                        statusSpan.textContent = "Date invalide";
+                    }
+                },
+                error: function(){
+                    statusSpan.textContent = "Eroare";
+                }
+            });
+        }
+
+
+
+
+            function loadFilteredInputs(pageNumber = 1, sort = null, searchStringCerere = '', filter='', nrCrt = null, description = '', creat_de='', sters_de='', data_creare='', data_stergere='') {
+                                    // Preia valorile curente
+                                    try {
+                filter = document.getElementById("filterSelect")?.value ?? '';
+            searchInput = document.getElementById("searchField")?.value ?? '';
+            nrCrt = document.getElementById("nrCrtFilter")?.value ?? '';
+            description = document.getElementById("descriptionFilter")?.value ?? '';
+            creat_de = document.getElementById("createdByFilter")?.value ?? '';
+            sters_de = document.getElementById("deletedByFilter")?.value ?? '';
+            data_creare = document.getElementById("createdOnFilter")?.value ?? '';
+            data_stergere = document.getElementById("deletedOnFilter")?.value ?? '';
+
+
+            // Determină sortarea: se folosește sort primit ca parametru sau selectul curent
             const sortOrder = (sort === null || sort === "none") ? filter : sort;
-            hiddenInput.value = sortOrder;
-            const search = searchString || searchInput;
-            const url = `@Url.Action("FilterCereriPartial", "Cereri")?pageNumber=${pageNumber}&sortOrder=${encodeURIComponent(sortOrder)}&searchString=${encodeURIComponent(searchInput)}`;
+
+            // Folosim searchString dacă este trecut, altfel inputul vizibil
+            const search = searchStringCerere || searchInput;
+
+            loadFilteredCereri(pageNumber,sortOrder,search, filter, nrCrt, description, creat_de, sters_de, data_creare, data_stergere);
+
+                                    } catch (err) {
+                console.error("Eroare la încărcarea filtrelor:", err);
+            alert("A apărut o eroare la încărcarea datelor. Verifică consola pentru detalii.");
+                                    }
+                                }
+
+            function loadFilteredCereri(pageNumber = 1, sort = null, searchStringCerere = '', filter='', nrCrt = null, description = '', creat_de='', sters_de='', data_creare='', data_stergere='') {
+                                          //alert(sort);
+                                          // Construim URL-ul cu parametrii necesari
+
+                                                                  const url = `@Url.Action("FilterCereriPartial", "Cereri")?pageNumber=${pageNumber}` +
+            `&sortOrder=${encodeURIComponent(sort)}` +
+            `&searchString=${encodeURIComponent(searchStringCerere)}` +
+            `&filter=${encodeURIComponent(filter)}` +
+            `&nrCrt=${encodeURIComponent(nrCrt)}` +
+            `&description=${encodeURIComponent(description)}` +
+            `&creat_de=${encodeURIComponent(creat_de)}` +
+            `&sters_de=${encodeURIComponent(sters_de)}`+
+            `&data_creare=${encodeURIComponent(data_creare)}`
+            + `&data_stergere=${encodeURIComponent(data_stergere)}`;
+
+            // Fetch AJAX pentru încărcarea partial view
             fetch(url)
-                .then(res => res.text())
-                .then(html => document.getElementById("ContainerTabel").innerHTML = html)
-                .catch(err => console.error(err));
-        }
+                                              .then(res => res.text())
+                                              .then(html => {
+                document.getElementById("ContainerTabel").innerHTML = html;
+            initializeAutocomplete();
 
-        document.getElementById("filterForm")?.addEventListener("submit", e => {
-            e.preventDefault();
+                                              })
+                                              .catch(err => console.error(err));
+                                        }
+
+
+                                document.getElementById("filterForm")?.addEventListener("submit", e => {
+                e.preventDefault();
             loadFilteredCereri();
-        });
+                                });
 
-        function openDeleteModal(id) {
-            fetch(`@Url.Action("GetDeleteModal", "Cereri")?id=${id}`)
-                .then(res => res.text())
-                .then(html => {
-                    document.getElementById("deleteModalContent").innerHTML = html;
-                    new bootstrap.Modal(document.getElementById('deleteModal')).show();
-                })
-                .catch(err => console.error(err));
-        }
 
-        function openDetaliiModal(id) {
-            fetch(`@Url.Action("GetDetaliiModal", "Cereri")?id=${id}`)
-                .then(res => res.text())
-                .then(html => {
-                    document.getElementById("detaliiModalContent").innerHTML = html;
-                    new bootstrap.Modal(document.getElementById('detaliiModal')).show();
-                })
-                .catch(err => console.error(err));
-        }
 
-        function openEditModal(id) {
-            fetch(`@Url.Action("GetEditModal", "Cereri")?id=${id}`)
-                .then(res => res.text())
-                .then(html => {
-                    document.getElementById("editModalContent").innerHTML = html;
-                    new bootstrap.Modal(document.getElementById('editModal')).show();
-                })
-                .catch(err => console.error(err));
-        }
+            // Resetăm toate filtrele și reîncărcăm lista
+            function clearFilters() {
+                console.log("clearFilters called");
 
-        function deleteCerere(id) {
-            if (!confirm("Sigur dorești să dezactivezi această cerere?")) return;
+            document.getElementById("filterSelect").value = '';
+            document.getElementById("searchField").value = '';
+            document.getElementById("nrCrtFilter").value = '';
+            document.getElementById("descriptionFilter").value = '';
+            document.getElementById("createdByFilter").value = '';
+            document.getElementById("deletedByFilter").value = '';
+            document.getElementById("createdOnFilter").value = '';
+            document.getElementById("deletedOnFilter").value = '';
+
+            // Reîncărcăm lista fără filtre
+            loadFilteredInputs(1, null, '', '', null, '', '', '', '');
+                     }
+
+
+
+
+            function openDeleteModal(id) {
+                fetch(`@Url.Action("GetDeleteModal", "Cereri")?id=${id}`)
+                    .then(res => res.text())
+                    .then(html => {
+                        document.getElementById("deleteModalContent").innerHTML = html;
+                        new bootstrap.Modal(document.getElementById('deleteModal')).show();
+                    })
+                    .catch(err => console.error(err));
+                                }
+
+            function openDetaliiModal(id) {
+                fetch(`@Url.Action("GetDetaliiModal", "Cereri")?id=${id}`)
+                    .then(res => res.text())
+                    .then(html => {
+                        document.getElementById("detaliiModalContent").innerHTML = html;
+                        new bootstrap.Modal(document.getElementById('detaliiModal')).show();
+                    })
+                    .catch(err => console.error(err));
+                                }
+
+            function openEditModal(id) {
+                fetch(`@Url.Action("GetEditModal", "Cereri")?id=${id}`)
+                    .then(res => res.text())
+                    .then(html => {
+                        document.getElementById("editModalContent").innerHTML = html;
+                        new bootstrap.Modal(document.getElementById('editModal')).show();
+                    })
+                    .catch(err => console.error(err));
+                                }
+
+
+
+            function deleteCerere(id) {
+                                    if (!confirm("Sigur dorești să dezactivezi această cerere?")) return;
             fetch(`/Cereri/DeleteConfirmed?id=${id}`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ id })
-            })
-            .then(res => res.json())
-            .then(response => {
-                if (response.success) {
-                    bootstrap.Modal.getInstance(document.getElementById('deleteModal'))?.hide();
-                    loadFilteredCereri();
-                } else console.warn(response.message);
-            })
-            .catch(err => { console.error(err); alert("Eroare la dezactivare!"); });
-        }
+            headers: {"Content-Type": "application/json" },
+            body: JSON.stringify({id})
+                                    })
+                                    .then(res => res.json())
+                                    .then(response => {
+                                        if (response.success) {
+                bootstrap.Modal.getInstance(document.getElementById('deleteModal'))?.hide();
+            loadFilteredCereri();
+                                        } else console.warn(response.message);
+                                    })
+                                    .catch(err => {console.error(err); alert("Eroare la dezactivare!"); });
+                                }
 
-        function exportCereriExcel() {
-            const filter = document.getElementById("filterSelect")?.value || 'toate';
+            function exportCereriExcel() {
+                                    const filter = document.getElementById("filterSelect")?.value || 'toate';
             window.location.href = `@Url.Action("FilterCereri", "Cereri")?filter=${encodeURIComponent(filter)}&exportExcel=true`;
-        }
+                                }
+
     </script>
+
+    
 }

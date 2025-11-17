@@ -2,6 +2,7 @@
 using LearningProject.Models;
 using LearningProject.Models.ViewModels;
 using LearningProject.Services.Impl;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace LearningProject.Services
@@ -9,51 +10,81 @@ namespace LearningProject.Services
     public class CereriService : ICereri
     {
         private readonly LearningProjectContext _context;
-
+        public static ViewModelPaginatedListCereri loadedData;
         public CereriService(LearningProjectContext context)
         {
             _context = context;
         }
-
         // 🔹 Modificăm tipul returnat: ViewModelPaginatedListCereri
         public async Task<ViewModelPaginatedListCereri> GetFilteredCereriAsync(
             string sortOrder,
             int pageNumber = 1,
             int pageSize = 3,
-            string? searchString = null)
+            string? searchString = null,
+            string? filter = "toate",
+            double? nrCrt = null,
+            string? description = null,
+            string? creat_de = null,
+            string? sters_de = null,
+            DateTime? data_creare = null,
+            DateTime? data_stergere = null
+)
         {
             var cereri = _context.Cereri
                 .Include(c => c.CreatedByUser)
                 .Include(c => c.DeletedBy)
+                .Include(c => c.Documente)//o cerere are mai multe semnaturi
                 .AsQueryable();
 
-            // 🔹 Filtrare
+            // 🔹 Filtrare nume
             if (!string.IsNullOrEmpty(searchString))
             {
                 cereri = cereri.Where(s => s.Name.Contains(searchString));
             }
 
-            // 🔹 Sortare
-            switch (sortOrder)
+            // 🔹 Filtrare nr cerere
+            if (nrCrt.HasValue)
             {
-                case "name_desc":
-                    cereri = cereri.OrderByDescending(c => c.Name);
-                    break;
-                case "created_by_desc":
-                    cereri = cereri.OrderByDescending(c => c.CreatedByUser);
-                    break;
-                case "created_on_desc":
-                    cereri = cereri.OrderByDescending(c => c.createdOn);
-                    break;
-                case "is_active_desc":
-                    cereri = cereri.OrderByDescending(c => c.IsActive);
-                    break;
-                case "delete_by_desc":
-                    cereri = cereri.OrderByDescending(c => c.DeletedBy);
-                    break;
-                case "status_desc":
-                    cereri = cereri.OrderBy(c => c.Deleted);
-                    break;
+                //din cauza key
+                cereri = cereri.Where(s => s.value == nrCrt.Value);
+            }
+
+            if (!string.IsNullOrEmpty(description))
+            {
+                cereri = cereri.Where(s => s.Description.Contains(description));
+            }
+
+            if (!string.IsNullOrEmpty(creat_de))
+            {
+                cereri = cereri.Where(s => s.CreatedByUser != null &&
+                                           s.CreatedByUser.Username.Contains(creat_de));
+            }
+
+            if (!string.IsNullOrEmpty(sters_de))
+            {
+                cereri = cereri.Where(s => s.DeletedBy != null &&
+                                           s.DeletedBy.Username.Contains(sters_de));
+            }
+
+            // 🔹 Filtru dupa data creării 
+            if (data_creare.HasValue)
+            {
+                cereri = cereri.Where(c =>
+                    c.createdOn.Date == data_creare.Value.Date
+                );
+            }
+
+            // 🔹 Filtru după data stergere 
+            if (data_stergere.HasValue)
+            {
+                cereri = cereri.Where(c =>
+        c.Deleted.HasValue &&
+        c.Deleted.Value.Date == data_stergere.Value.Date);
+            }
+
+            // 🔹 Filtrare după dropdown
+            switch (filter)
+            {
                 case "active":
                     cereri = cereri.Where(c => c.IsActive);
                     break;
@@ -61,27 +92,164 @@ namespace LearningProject.Services
                     cereri = cereri.Where(c => !c.IsActive);
                     break;
                 case "toate":
+                default:
+                    break; 
+            }
+
+            // Sortează DESC după Id
+            cereri = cereri.OrderByDescending(c => c.Id);
+
+
+            // 🔹 Sortare
+            switch (sortOrder)
+            {
+                case "id":
+                    cereri = cereri.OrderByDescending(c => c.Name);
+                    break;
+                case "name":
+                    cereri = cereri.OrderByDescending(c => c.Name);
+                    break;
+                case "nrCrt":
+                    cereri = cereri.OrderByDescending(c => c.value);
+                    break;
+                case "created_on_desc":
+                    cereri = cereri.OrderByDescending(c => c.createdOn);
+                    break;
+                case "is_active_desc":
+                    cereri = cereri.OrderByDescending(c => c.IsActive);
+                    break;
+                case "deletedBy":
+                    cereri = cereri.OrderByDescending(c => c.DeletedBy);
+                    break;
+                case "deletedOn":
+                    cereri = cereri.OrderBy(c => c.Deleted);
+                    break;
+                case "active":
+                    cereri = cereri.OrderBy(c => c.IsActive);
+                    break;
+                case "status":
+                    cereri = cereri.Where(c => c.IsActive);
+                    break;
+                case "description":
+                    cereri = cereri.OrderBy(c => c.Description);
+                    break;
+                case "toate":
                     cereri = cereri.OrderBy(c => c.Name);
                     break;
                 default:
-                    cereri = cereri.OrderBy(c => c.Name);
+                    cereri = cereri.OrderByDescending(c => c.Id);
                     break;
             }
 
-            // 🔹 Paginare
             var paginatedCereri = await PaginatedList<Cereri>.CreateAsync(
                 cereri.AsNoTracking(), pageNumber, pageSize);
 
-            // 🔹 Construim view modelul pentru view
+            var listaCereriCuStatus = paginatedCereri.Select(c => new CerereStatusViewModel
+            {
+                Cerere = c,
+                AllSigned = c.Documente.Any() && c.Documente.All(s => s.Status == StatusDocument.Semnat)
+            }).ToList();
+
+
             var viewModel = new ViewModelPaginatedListCereri
             {
                 ListaCereriCuPaginatie = paginatedCereri,
                 sortOrder = sortOrder,
                 searchInput = searchString,
-                pageNumber = pageNumber
+                pageNumber = pageNumber,
+                filter_value = filter,
+                nrCrt = nrCrt,
+                data_creare = data_creare,
+                data_stergere = data_stergere,
+                ListaCereriCuStatus = listaCereriCuStatus 
             };
 
             return viewModel;
+        }
+
+        public async Task<ViewModelPaginatedListCereri> GetLoadedData(string sortOrder,
+            int pageNumber = 1,
+            int pageSize = 3,
+            string? searchString = null,
+            string? filter = "toate",
+            double? nrCrt = null,
+            string? description = null,
+            string? creat_de = null,
+            string? sters_de = null,
+            DateTime? data_creare = null,
+            DateTime? data_stergere = null)
+        {
+            if (loadedData == null)
+            {
+                loadedData = await GetFilteredCereriAsync(
+             sortOrder,
+            pageNumber,
+             pageSize,
+              searchString,
+              filter,
+            nrCrt,
+             description,
+              creat_de,
+             sters_de,
+              data_creare,
+              data_stergere);
+                return loadedData;
+            }
+            else 
+            {
+                return loadedData;
+            }
+        }
+
+        public async Task<Cereri> CreateCerereAsync(CreateNewCerereModel model, string currentUserName)
+        {
+            var user = await _context.User
+                .FirstOrDefaultAsync(w => w.Username == currentUserName);
+
+            if (user == null)
+                throw new Exception("User not found.");
+
+            // Construim lista de semnături
+            var signatureRoles = new Dictionary<string, int>
+        {
+            { "Manager", 2 },
+            { "Admin", 3 },
+            { "Checker", 1 }
+        };
+
+            ICollection<Signature> listaSignaturi = new List<Signature>();
+
+            foreach (var item in signatureRoles)
+            {
+                var claim = await _context.Claim.FirstOrDefaultAsync(c => c.name == item.Key);
+
+                if (claim != null)
+                {
+                    listaSignaturi.Add(new Signature
+                    {
+                        ClaimCanSign = claim,
+                        order = item.Value
+                    });
+                }
+            }
+
+            var cerere = new Cereri
+            {
+                Name = model.Name,
+                Description = model.Description,
+                createdOn = DateTime.Now,
+                IsActive = true,
+                CreatedByUser = user,
+                value = (double)model.Value,
+                Documente = listaSignaturi
+            };
+
+            _context.Cereri.Add(cerere);
+            await _context.SaveChangesAsync();
+            //
+            //trimite mail folosind comunication hub
+            return cerere;
+
         }
     }
 }

@@ -1,85 +1,126 @@
 ﻿@model LearningProject.Models.ViewModels.ViewModelPaginatedListCereri
 
+<style>
+    div.ex1 {
+        height: 110px;
+        overflow: auto;
+    }
+</style>
 
 
-<div id="ContainerTabel">
+
+<!-- 🔹 Containerul unde se încarcă partial view-ul -->
+<div id="ContainerTabel" class="d-flex flex-column ex1" style="min-height: 600px;">
     @if (Model.ListaCereriCuPaginatie != null && Model.ListaCereriCuPaginatie.Any())
     {
         <table class="table table-bordered table-striped">
             <thead class="table-light">
                 <tr>
-                    <th>Nr. crt</th>
+                    <!-- Id -->
 
-                    <th>
-                        <a href="#" onclick="loadFilteredCereri(1, '@(ViewData["NameSortParm"] ?? "name")')">
+                    <!-- Nr. crt -->
+                    <th scope="col" class="position-relative">
+                        <a href="#" onclick="loadFilteredCereri(1, '@(ViewData["NrCrtSortParm"] ?? "nrCrt")')" class="d-block text-center text-decoration-none">Nr crt</a>
+                        <input type="text" id="nrCrtFilter" class="form-control form-control-sm mt-1" placeholder="Caută..." value="@Model.nrCrt" />
+                    </th>
+
+                    <!-- Nume -->
+                    <th scope="col" class="position-relative">
+                        <a href="#" onclick="loadFilteredCereri(1, '@(ViewData["NameSortParm"] ?? "name")')" class="d-block text-center text-decoration-none">
                             Nume
                         </a>
-
-
-
-                        <!-- Input filtrare Bootstrap Name Cereri-->
-                        <div class="input-group input-group-sm mt-1">
-                            <input type="text" class="form-control"
-                                   id="filterName"
-                                   placeholder="Caută...">
-                            <button class="btn btn-outline-secondary" type="button"
-                                    onclick="loadFilteredCereri(1, '@(ViewData["NameSortParm"] ?? "name")', document.getElementById('filterName').value)">
-                                <i class="bi bi-search"></i>
-                            </button>
-                        </div>
-
+                        <input type="text" class="form-control form-control-sm mt-1" id="searchField" placeholder="Caută..." value="@Model.searchInput" />
                     </th>
 
-                    <th>Descriere</th>
-
-                    <th>
-                        <a href="#" onclick="loadFilteredCereri(1, '@(ViewData["CreatedBySortParm"] ?? "createdBy")')">
-                            Creat de:
+                    <!-- Descriere -->
+                    <th scope="col" class="position-relative">
+                        <a href="#" onclick="loadFilteredCereri(1, '@(ViewData["NrCrtSortParm"] ?? "description")')" class="d-block text-center text-decoration-none" onclick="return false;">
+                            Descriere
                         </a>
+                        <input type="text" id="descriptionFilter" class="form-control form-control-sm mt-1" placeholder="Caută..." value="@Model.descriere_value" />
                     </th>
 
-                    <th>
-                        <a href="#" onclick="loadFilteredCereri(1, '@(ViewData["CreatedOnSortParm"] ?? "createdOn")')">
-                            Data Creare:
+                    <!-- Creat de -->
+                    <th scope="col" class="position-relative">
+                        <a href="#" class="d-block text-center text-decoration-none" onclick="loadFilteredInputs(1, '@(ViewData["CreatedBySortParm"] ?? "createdBy")')">
+                            Creat de
                         </a>
-                    </th>
-                    <th>
-                        <a href="#" onclick="loadFilteredCereri(1, '@(ViewData["IsActiveSortParm"] ?? "isActive")')">
-                            Data Stergere:
-                        </a>
+                        <input type="text" id="createdByFilter" class="form-control form-control-sm mt-1" placeholder="Caută..." value="@Model.creat_de" />
                     </th>
 
-                    <th>
-                        <a href="#" onclick="loadFilteredCereri(1, '@(ViewData["DeletedBySortParm"] ?? "deletedBy")')">
-                            Sters de:
+                    <!-- Data Creare -->
+                    <th scope="col" class="position-relative">
+                        <a href="#" class="d-block text-center text-decoration-none" onclick="loadFilteredInputs(1, '@(ViewData["CreatedOnSortParm"] ?? "createdOn")')">
+                            Data Creare
                         </a>
+                        <input type="date" id="createdOnFilter" class="form-control form-control-sm mt-1" onchange="onDateFilterChange()"
+                               value="@(Model.data_creare?.ToString("yyyy-MM-dd") ?? "")" />
                     </th>
 
-                    <th>
-                        <a href="#" onclick="loadFilteredCereri(1, '@(ViewData["StatusSortParam"] ?? "status")')">
+                    <!-- Data Ștergere -->
+                    <th scope="col" class="position-relative">
+                        <a href="#" class="d-block text-center text-decoration-none" onclick="loadFilteredInputs(1, '@(ViewData["DeletedOnSortParm"] ?? "deletedOn")')">
+                            Data Ștergere
+                        </a>
+                        <input type="date" id="deletedOnFilter" class="form-control form-control-sm mt-1" onchange="onDeletedDateFilterChange()"
+                               value="@(Model.data_stergere?.ToString("yyyy-MM-dd") ?? "")" />
+                    </th>
+
+                    <!-- Șters de -->
+                    <th scope="col" class="position-relative">
+                        <a href="#" class="d-block text-center text-decoration-none" onclick="loadFilteredInputs(1, '@(ViewData["DeletedBySortParm"] ?? "deletedBy")')">
+                            Șters de
+                        </a>
+                        <input type="text" id="deletedByFilter" class="form-control form-control-sm mt-1" placeholder="Caută..." value="@Model.sters_de" />
+                    </th>
+
+                    <!-- Status -->
+                    <th scope="col" style="min-width:100px" class="position-relative">
+                        <a href="#" class="d-block text-center text-decoration-none" onclick="loadFilteredInputs(1, '@(ViewData["StatusSortParam"] ?? "status")')">
                             Status
                         </a>
+                        <select id="filterSelect" class="form-select form-select-sm mt-1" onchange="loadFilteredInputs()">
+                            <option value="toate" selected="@(Model.filter_value == "toate")">Toate</option>
+                            <option value="active" selected="@(Model.filter_value == "active")">Active</option>
+                            <option value="inactive" selected="@(Model.filter_value == "inactive")">Inactive</option>
+                        </select>
+                    </th>
 
-                        <!-- Dropdown de filtrare integrat sub antet -->
-                        <div class="mt-1">
-                            <select name="filter" id="filterSelect" onchange="loadFilteredCereri()">
-                                <option value="toate">Toate</option>
-                                <option value="active">Active</option>
-                                <option value="inactive">Inactive</option>
-                            </select>
+                    <!-- Acțiuni -->
+                    <th scope="col" style="min-width:300px" class="position-relative">
+                        <div class="d-flex flex-column">
+                            <div class="p-2 text-center">Acțiuni btn</div>
+                            <div class="p-2">
+                                <div class="d-flex justify-content-between gap-2">
+                                    <button class="btn btn-primary btn-sm w-100" style="height:30px; width:40%" onclick="loadFilteredInputs()" data-toggle="tooltip" data-placement="bottom" title="Filtreaza">
+                                        <i class="bi bi-search"></i>
+                                    </button>
+                                    <button class="btn btn-warning btn-sm w-100" style="height:30px; width:40%" onclick="clearFilters()" data-toggle="tooltip" data-placement="bottom" title="Curata filtere">
+                                        <i class="bi bi-eraser-fill"></i>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </th>
 
-                    <th>Acțiuni btn</th>
+
+                    <!-- Status semnare -->
+                    <th scope="col" class="position-relative">
+                        <a href="#">Status semnare</a>
+                        <input type="text" id="nrCrtFilter" class="form-control form-control-sm mt-1" placeholder="Caută..." value="@Model.nrCrt" />
+                    </th>
+
+
+
                 </tr>
             </thead>
-            <tbody>
+
+            <tbody class="text-center">
                 @foreach (var item in Model.ListaCereriCuPaginatie)
                 {
                     <tr>
                         <td>@item.value</td>
                         <td>@item.Name</td>
-
                         <td>@item.Description</td>
                         <td>@item.CreatedByUser?.Username</td>
                         <td>@item.createdOn</td>
@@ -105,54 +146,75 @@
                             }
                             @if (User.HasClaim(c => c.Value == "CereriDetails"))
                             {
-                                <button class="btn btn-primary btn-sm" onclick="openEditModal(@item.Id)" data-id="@item.Id">
+                                <button class="btn btn-sm @(item.IsActive ? "btn-primary" : "btn-secondary disabled")"
+                                        onclick="openEditModal(@item.Id)"
+                                        data-id="@item.Id"
+                                        @(item.IsActive ? "" : "disabled")>
                                     <i class="bi bi-pencil-square"></i>
                                     Edit
                                 </button>
                             }
                             @if (User.IsInRole("CereriDelete"))
                             {
-                                <button class="btn btn-danger btn-sm" onclick="openDeleteModal(@item.Id)" data-id="@item.Id">
+
+                                <button class="btn btn-sm @(item.IsActive ? "btn-danger" : "btn-secondary disabled")"
+                                        onclick="openDeleteModal(@item.Id)"
+                                        data-id="@item.Id"
+                                        @(item.IsActive ? "" : "disabled")>
                                     <i class="bi bi-trash"></i> Șterge
-                                </button>
+                                </button>     
                             }
                         </td>
+
+                        <td class="text-center">
+                            <span class="@(item.AllSigned ? "text-success fw-bold" : "text-danger fw-bold")">
+                                @(item.AllSigned ? "Semnat" : "Nesemnat")
+                            </span>
+                            @if (!item.IsActive)
+                            {
+                                <span class="text-muted fw-bold">(Proces oprit)</span>
+                            }
+                        </td>
+
+
+
                     </tr>
                 }
             </tbody>
         </table>
 
-
-
-
-
         <!-- PAGINARE -->
-        <div class="pagination mt-3 d-flex justify-content-center">
+        <div class="d-flex justify-content-center align-items-center mt-auto py-2 border-top bg-white">
             @if (Model.ListaCereriCuPaginatie.HasPreviousPage)
             {
-                <button class="btn btn-outline-primary"
-                        onclick="loadFilteredCereri(@(Model.ListaCereriCuPaginatie.PageIndex - 1))">
+                <button class="btn btn-outline-primary me-2"
+                        onclick="loadFilteredInputs(@(Model.ListaCereriCuPaginatie.PageIndex - 1))">
                     &laquo; Anterior
                 </button>
             }
 
-            <span class="mx-5">Pagina @Model.ListaCereriCuPaginatie.PageIndex din @Model.ListaCereriCuPaginatie.TotalPages</span>
+            <span class="mx-3">Pagina @Model.ListaCereriCuPaginatie.PageIndex din @Model.ListaCereriCuPaginatie.TotalPages</span>
 
             @if (Model.ListaCereriCuPaginatie.HasNextPage)
             {
-                <button class="btn btn-outline-primary"
-                        onclick="loadFilteredCereri(@(Model.ListaCereriCuPaginatie.PageIndex + 1))">
+                <button class="btn btn-outline-primary ms-2"
+                        onclick="loadFilteredInputs(@(Model.ListaCereriCuPaginatie.PageIndex + 1))">
                     Următor &raquo;
                 </button>
             }
         </div>
-
     }
     else
     {
-        <p class="text-muted">Nu există cereri pentru filtrul selectat.</p>
+        <div class="text-center">
+            <p class="text-muted">Nu există cereri pentru filtrul selectat.</p>
+            <form asp-action="FilterCereri" asp-controller="Cereri" method="get">
+                <button type="submit" class="btn btn-secondary mt-2">Înapoi</button>
+            </form>
+        </div>
     }
 </div>
+
 
 <!-- Modal global Delete -->
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
@@ -178,5 +240,4 @@
 
 @section Scripts {
     @await Html.PartialAsync("_ValidationScriptsPartial")
-   
 }

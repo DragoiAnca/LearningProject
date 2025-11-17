@@ -2,12 +2,8 @@
 using LearningProject.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+
 
 namespace LearningProject.Controllers
 {
@@ -49,6 +45,22 @@ namespace LearningProject.Controllers
         {
             return View();
         }
+
+
+        [Authorize(Roles = "Manager")]
+        public IActionResult Manager()
+        {
+            return View();
+        }
+
+
+     //   [Authorize(Roles = "Checker")]
+        public IActionResult Checker()
+        {
+            return Content("checker");
+        }
+
+
 
         [Authorize(Roles = "ClaimsCreate")]
         [HttpPost]

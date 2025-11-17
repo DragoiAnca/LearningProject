@@ -23,11 +23,12 @@ body {
 
 
 .ui-autocomplete {
-    z-index: 1051 !important; /* for modals or dropdowns */
+    z-index: 1051 !important; 
     background-color: white;
     border-radius: 0.5rem;
     border: 1px solid #ced4da;
     max-height: 200px;
+    max-width: 200px;
     overflow-y: auto;
 }
 .ui-helper-hidden-accessible {

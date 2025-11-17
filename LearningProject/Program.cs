@@ -5,7 +5,7 @@ using LearningProject.Services.Impl;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
-
+using LearningProject.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,12 +15,27 @@ builder.Services.AddDbContext<LearningProjectContext>(options =>
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
+// Bind ApiUrls
+builder.Services.Configure<ApiUrlsOptions>(builder.Configuration.GetSection("ApiUrls"));
+
+//Inregistram serviul Send E-mail 
+//builder.Services.AddScoped<SendEmailService>();
+
+builder.Services.AddHttpClient<SendEmailService>();
+
+
+// Adaugă suport pentru controller-e
+builder.Services.AddControllers();
+
+
 // scoped to match  context lifecycle
 builder.Services.AddScoped<IClaimsTransformation, ClaimsTransformer>();
 builder.Services.AddScoped<ICereri, CereriService>();
 
 builder.Services.AddScoped<ErrorLoggerService>();
 builder.Services.AddScoped<IUsers, Users>();
+builder.Services.AddScoped<ICereri, CereriService>();
+
 
 builder.Services.AddAuthorization(options =>
 {

@@ -1,7 +1,5 @@
-﻿using Azure.Identity;
-using LearningProject.Data;
+﻿using LearningProject.Data;
 using LearningProject.Models;
-using LearningProject.Services;
 using LearningProject.Services.Impl;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -112,9 +110,10 @@ namespace LearningProject.Controllers
         }
 
         [Authorize(Roles = "UserGetTest")]
-        [HttpGet("/test")]
+        [HttpGet("/GetTest")]
 
         public async Task<IActionResult> GetTest(string autocompleteText)
+        
         {
             var query = _context.V_employees.AsQueryable();
 
@@ -138,7 +137,7 @@ namespace LearningProject.Controllers
         }
 
         [Authorize(Roles = "UserGetDetails")]
-        [HttpGet("/details")]
+        [HttpGet("/GetDetails")]
         public async Task<IActionResult> GetDetails(string username)
         {
             if (string.IsNullOrWhiteSpace(username))

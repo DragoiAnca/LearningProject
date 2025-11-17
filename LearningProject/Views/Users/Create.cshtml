@@ -92,7 +92,7 @@
                 if (!username) return;
 
                 $.ajax({
-                    url: '/details',
+                    url: '/GetDetails',
                     type: 'GET',
                     dataType: 'json',
                     data: { username: username },
@@ -116,43 +116,67 @@
                 });
             }
 
-            // Autocomplete for Username search
-            $("#searchField").autocomplete({
-                source: function (request, response) {
-                    $.ajax({
-                        url: '/test',
-                        type: 'GET',
-                        dataType: 'json',
-                        data: { autocompleteText: request.term },
-                        success: function (data) {
-                            response($.map(data, function (item) {
-                                return {
-                                    label: item.fullName + " (" + item.employeeID + ")",
-                                    value: item.username,
-                                    username: item.username
-                                };
-                            }));
-                        },
-                        error: function (xhr, status, error) {
-                            console.error("AJAX error:", error);
+
+
+                    // Autocomplete for Username search with debug
+        $("#searchField").autocomplete({
+            source: function (request, response) {
+                console.log("Autocomplete triggered. Term:", request.term); // Debug
+
+                $.ajax({
+                    url: '/GetTest',
+                    type: 'GET',
+                    dataType: 'json',
+                    data: { autocompleteText: request.term },
+                    success: function (data) {
+                        console.log("AJAX success. Raw data:", data); // Debug
+
+                        if (!Array.isArray(data)) {
+                            console.error("Data is not an array!", data);
+                            response([]);
+                            return;
                         }
-                    });
-                },
-                minLength: 2,
-                select: function (event, ui) {
-                    event.preventDefault();
 
-                    // Set search field value
-                    $("#searchField").val(ui.item.username);
+                        const mappedData = $.map(data, function (item) {
+                            console.log("Mapping item:", item); // Debug
+                            return {
+                                label: item.fullName + " (" + item.employeeID + ")",
+                                value: item.username,
+                                username: item.username
+                            };
+                        });
 
-                    // Populate fields
+                        console.log("Mapped data:", mappedData); // Debug
+                        response(mappedData);
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("AJAX error:", status, error, xhr.responseText); // Debug
+                        response([]);
+                    }
+                });
+            },
+            minLength: 2,
+            select: function (event, ui) {
+                event.preventDefault();
+                console.log("Item selected:", ui.item); // Debug
+
+                // Set search field value
+                $("#searchField").val(ui.item.username);
+
+                // Populate fields safely
+                if (typeof populateFields === 'function') {
+                    console.log("Calling populateFields for:", ui.item.username); // Debug
                     populateFields(ui.item.username);
-
-                    // Disable search input and show Edit button
-                    $("#searchField").prop("disabled", true);
-                    $("#editSearch").show();
+                } else {
+                    console.warn("populateFields function is not defined!");
                 }
-            });
+
+                // Disable search input and show Edit button
+                $("#searchField").prop("disabled", true);
+                $("#editSearch").show();
+            }
+        });
+
 
             // Edit button to reset search and fields
             $("#editSearch").on("click", function () {

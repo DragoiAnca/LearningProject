@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using LearningProject.Models;
 
 namespace LearningProject.Data
@@ -24,6 +20,9 @@ namespace LearningProject.Data
         public DbSet<LearningProject.Models.Student> Students { get; set; }
         public DbSet<LearningProject.Models.Enrollment> Enrollments { get; set; }
         public DbSet<LearningProject.Models.Course> Courses { get; set; }
+
+        public DbSet<LearningProject.Models.Signature> Signatures { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

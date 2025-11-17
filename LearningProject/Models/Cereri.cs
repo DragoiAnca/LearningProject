@@ -1,10 +1,9 @@
-﻿using LearningProject.Models;
-using System.ComponentModel.DataAnnotations;
+﻿using static LearningProject.Models.Signature;
 
 
 namespace LearningProject.Models
 {
-    public class Cereri
+    public partial class Cereri
     {
         public int Id { get; set; }
         public string Name { get; set; }
@@ -12,12 +11,12 @@ namespace LearningProject.Models
         public DateTime createdOn { get; set; }
         public bool IsActive { get; set; }
         public DateTime? Deleted { get; set; }
-
         public int CreatedByUserId { get; set; }
         public User CreatedByUser { get; set; }
-
         public int? DeletedById { get; set; }
         public User? DeletedBy { get; set; }
         public double value { get; set; }
+
+        
     }
 }
