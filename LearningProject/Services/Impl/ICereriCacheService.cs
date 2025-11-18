@@ -17,6 +17,16 @@ namespace LearningProject.Services.Impl
         DateTime? data_creare = null,
         DateTime? data_stergere = null);
 
-        Task ReloadCacheAsync();
+        Task ReloadCacheAsync(string sortOrder,
+        int pageNumber = 1,
+        int pageSize = 3,
+        string? searchString = null,
+        string? filter = "toate",
+        double? nrCrt = null,
+        string? description = null,
+        string? creat_de = null,
+        string? sters_de = null,
+        DateTime? data_creare = null,
+        DateTime? data_stergere = null);
     }
 }

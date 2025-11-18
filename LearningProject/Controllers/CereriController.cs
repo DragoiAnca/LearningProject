@@ -15,12 +15,14 @@ namespace LearningProject.Controllers
     public class CereriController : Controller
     {
         private readonly LearningProjectContext _context;
-        private readonly ICereri _cereriService;
+        private readonly ICereriCacheService _cereriService;
+        private readonly ICereri _cereriServiceCreate;
 
-        public CereriController(LearningProjectContext context, ICereri cereriService)
+        public CereriController(LearningProjectContext context, ICereriCacheService cereriService, ICereri cereriServiceCreate)
         {
             _context = context;
             _cereriService = cereriService;
+            _cereriServiceCreate = cereriServiceCreate;
         }
 
         //search field - autofill
@@ -82,7 +84,7 @@ namespace LearningProject.Controllers
      [FromQuery] DateTime? data_creare,
      [FromQuery] DateTime? data_stergere)
         {
-            var pagedCereri = await _cereriService.GetFilteredCereriAsync(
+            var pagedCereri = await _cereriService.GetCachedDataAsync(
                 sortOrder,
                 pageNumber ?? 1,
                 3,
@@ -275,7 +277,7 @@ namespace LearningProject.Controllers
             var currentUserName = User.FindFirstValue(ClaimTypes.Name)
                 .Replace("MMRMAKITA\\", "");
 
-            var cerere = await _cereriService.CreateCerereAsync(model, currentUserName);
+            var cerere = await _cereriServiceCreate.CreateCerereAsync(model, currentUserName);
 
 
 
