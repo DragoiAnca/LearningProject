@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using LearningProject.Models;
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<LearningProjectContext>(options =>
@@ -32,6 +33,8 @@ builder.Services.AddControllers();
 builder.Services.AddScoped<IClaimsTransformation, ClaimsTransformer>();
 builder.Services.AddScoped<ICereri, CereriService>();
 builder.Services.AddScoped<ICereriCacheService, CereriCacheService>();
+builder.Services.AddScoped<IBufferedFileUploadService, BufferedFileUploadLocalService>();
+
 
 builder.Services.AddScoped<ErrorLoggerService>();
 builder.Services.AddScoped<IUsers, Users>();

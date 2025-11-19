@@ -35,7 +35,6 @@
 </div>
 
 
-
 <!-- 🔹 Containerul unde se încarcă partial view-ul -->
 <div id="ContainerTabel">
 </div>
@@ -46,200 +45,278 @@
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
     <script>
 
-                // Call on page load
+                        // Call on page load
 
-        window.addEventListener('DOMContentLoaded', () => {
-                loadFilteredInputs(); });
+                window.addEventListener('DOMContentLoaded', () => {
+                        loadFilteredInputs(); });
 
-            function initializeAutocomplete() {
-                $("#searchField").autocomplete({
-                    source: function (request, response) {
-                        $.ajax({
-                            url: '/GetAutofill',
-                            type: 'GET',
-                            dataType: 'json',
-                            data: { autocompleteText: request.term },
-                            success: function (data) {
-                                response($.map(data, function (item) {
-                                    return { label: item.name, value: item.name };
-                                }));
+                    function initializeAutocomplete() {
+                        $("#searchField").autocomplete({
+                            source: function (request, response) {
+                                $.ajax({
+                                    url: '/GetAutofill',
+                                    type: 'GET',
+                                    dataType: 'json',
+                                    data: { autocompleteText: request.term },
+                                    success: function (data) {
+                                        response($.map(data, function (item) {
+                                            return { label: item.name, value: item.name };
+                                        }));
+                                    },
+                                    error: function (xhr, status, error) {
+                                        console.error("AJAX error:", error);
+                                    }
+                                });
                             },
-                            error: function (xhr, status, error) {
-                                console.error("AJAX error:", error);
+                            minLength: 2,
+                            select: function (event, ui) {
+                                event.preventDefault();
+                                $("#searchField").val(ui.item.value);
+                                // Reîncarcă tabela folosind search-ul selectat
+                                loadFilteredInputs(1, null, ui.item.value);
                             }
                         });
-                    },
-                    minLength: 2,
-                    select: function (event, ui) {
-                        event.preventDefault();
-                        $("#searchField").val(ui.item.value);
-                        // Reîncarcă tabela folosind search-ul selectat
-                        loadFilteredInputs(1, null, ui.item.value);
-                    }
-                });
-                                }
-
-
-           function checkSign(id) {
-            var statusSpan = document.getElementById('status-' + id);
-
-            $.ajax({
-                url: '/Cereri/GetBoolIfSign', // înlocuiește [ControllerName] cu numele controllerului tău
-                type: 'GET',
-                data: { id_cerere: id },
-                success: function(data){
-                    // aici presupunem că data are un câmp isSigned
-                    if (data.isSigned !== undefined) {
-                        statusSpan.textContent = data.isSigned ? "Semnat" : "Nesemnat";
-                    } else {
-                        statusSpan.textContent = "Date invalide";
-                    }
-                },
-                error: function(){
-                    statusSpan.textContent = "Eroare";
-                }
-            });
-        }
-
-
-
-
-            function loadFilteredInputs(pageNumber = 1, sort = null, searchStringCerere = '', filter='', nrCrt = null, description = '', creat_de='', sters_de='', data_creare='', data_stergere='') {
-                                    // Preia valorile curente
-                                    try {
-                filter = document.getElementById("filterSelect")?.value ?? '';
-            searchInput = document.getElementById("searchField")?.value ?? '';
-            nrCrt = document.getElementById("nrCrtFilter")?.value ?? '';
-            description = document.getElementById("descriptionFilter")?.value ?? '';
-            creat_de = document.getElementById("createdByFilter")?.value ?? '';
-            sters_de = document.getElementById("deletedByFilter")?.value ?? '';
-            data_creare = document.getElementById("createdOnFilter")?.value ?? '';
-            data_stergere = document.getElementById("deletedOnFilter")?.value ?? '';
-
-
-            // Determină sortarea: se folosește sort primit ca parametru sau selectul curent
-            const sortOrder = (sort === null || sort === "none") ? filter : sort;
-
-            // Folosim searchString dacă este trecut, altfel inputul vizibil
-            const search = searchStringCerere || searchInput;
-
-            loadFilteredCereri(pageNumber,sortOrder,search, filter, nrCrt, description, creat_de, sters_de, data_creare, data_stergere);
-
-                                    } catch (err) {
-                console.error("Eroare la încărcarea filtrelor:", err);
-            alert("A apărut o eroare la încărcarea datelor. Verifică consola pentru detalii.");
-                                    }
-                                }
-
-            function loadFilteredCereri(pageNumber = 1, sort = null, searchStringCerere = '', filter='', nrCrt = null, description = '', creat_de='', sters_de='', data_creare='', data_stergere='') {
-                                          //alert(sort);
-                                          // Construim URL-ul cu parametrii necesari
-
-                                                                  const url = `@Url.Action("FilterCereriPartial", "Cereri")?pageNumber=${pageNumber}` +
-            `&sortOrder=${encodeURIComponent(sort)}` +
-            `&searchString=${encodeURIComponent(searchStringCerere)}` +
-            `&filter=${encodeURIComponent(filter)}` +
-            `&nrCrt=${encodeURIComponent(nrCrt)}` +
-            `&description=${encodeURIComponent(description)}` +
-            `&creat_de=${encodeURIComponent(creat_de)}` +
-            `&sters_de=${encodeURIComponent(sters_de)}`+
-            `&data_creare=${encodeURIComponent(data_creare)}`
-            + `&data_stergere=${encodeURIComponent(data_stergere)}`;
-
-            // Fetch AJAX pentru încărcarea partial view
-            fetch(url)
-                                              .then(res => res.text())
-                                              .then(html => {
-                document.getElementById("ContainerTabel").innerHTML = html;
-            initializeAutocomplete();
-
-                                              })
-                                              .catch(err => console.error(err));
                                         }
 
 
-                                document.getElementById("filterForm")?.addEventListener("submit", e => {
-                e.preventDefault();
-            loadFilteredCereri();
-                                });
+                   function checkSign(id) {
+                    var statusSpan = document.getElementById('status-' + id);
+
+                    $.ajax({
+                        url: '/Cereri/GetBoolIfSign', // înlocuiește [ControllerName] cu numele controllerului tău
+                        type: 'GET',
+                        data: { id_cerere: id },
+                        success: function(data){
+                            // aici presupunem că data are un câmp isSigned
+                            if (data.isSigned !== undefined) {
+                                statusSpan.textContent = data.isSigned ? "Semnat" : "Nesemnat";
+                            } else {
+                                statusSpan.textContent = "Date invalide";
+                            }
+                        },
+                        error: function(){
+                            statusSpan.textContent = "Eroare";
+                        }
+                    });
+                }
+
+
+                    function loadFilteredInputs(pageNumber = 1, sort = null, searchStringCerere = '', filter='', nrCrt = null, description = '', creat_de='', sters_de='', data_creare='', data_stergere='') {
+                                            // Preia valorile curente
+                                            try {
+                    filter = document.getElementById("filterSelect")?.value ?? '';
+                    searchInput = document.getElementById("searchField")?.value ?? '';
+                    nrCrt = document.getElementById("nrCrtFilter")?.value ?? '';
+                    description = document.getElementById("descriptionFilter")?.value ?? '';
+                    creat_de = document.getElementById("createdByFilter")?.value ?? '';
+                    sters_de = document.getElementById("deletedByFilter")?.value ?? '';
+                    data_creare = document.getElementById("createdOnFilter")?.value ?? '';
+                    data_stergere = document.getElementById("deletedOnFilter")?.value ?? '';
+
+
+                    // Determină sortarea: se folosește sort primit ca parametru sau selectul curent
+                    const sortOrder = (sort === null || sort === "none") ? filter : sort;
+
+                    // Folosim searchString dacă este trecut, altfel inputul vizibil
+                    const search = searchStringCerere || searchInput;
+
+                    loadFilteredCereri(pageNumber,sortOrder,search, filter, nrCrt, description, creat_de, sters_de, data_creare, data_stergere);
+
+                                            } catch (err) {
+                        console.error("Eroare la încărcarea filtrelor:", err);
+                    alert("A apărut o eroare la încărcarea datelor. Verifică consola pentru detalii.");
+                                            }
+                                        }
+
+                    function loadFilteredCereri(pageNumber = 1, sort = null, searchStringCerere = '', filter='', nrCrt = null, description = '', creat_de='', sters_de='', data_creare='', data_stergere='') {
+                                                  //alert(sort);
+                                                  // Construim URL-ul cu parametrii necesari
+
+                                                                          const url = `@Url.Action("FilterCereriPartial", "Cereri")?pageNumber=${pageNumber}` +
+                    `&sortOrder=${encodeURIComponent(sort)}` +
+                    `&searchString=${encodeURIComponent(searchStringCerere)}` +
+                    `&filter=${encodeURIComponent(filter)}` +
+                    `&nrCrt=${encodeURIComponent(nrCrt)}` +
+                    `&description=${encodeURIComponent(description)}` +
+                    `&creat_de=${encodeURIComponent(creat_de)}` +
+                    `&sters_de=${encodeURIComponent(sters_de)}`+
+                    `&data_creare=${encodeURIComponent(data_creare)}`
+                    + `&data_stergere=${encodeURIComponent(data_stergere)}`;
+
+                    // Fetch AJAX pentru încărcarea partial view
+                    fetch(url)
+                                                      .then(res => res.text())
+                                                      .then(html => {
+                        document.getElementById("ContainerTabel").innerHTML = html;
+                    initializeAutocomplete();
+
+                                                      })
+                                                      .catch(err => console.error(err));
+                                                }
+
+
+                                        document.getElementById("filterForm")?.addEventListener("submit", e => {
+                        e.preventDefault();
+                    loadFilteredCereri();
+                                        });
 
 
 
-            // Resetăm toate filtrele și reîncărcăm lista
-            function clearFilters() {
-                console.log("clearFilters called");
+                    // Resetăm toate filtrele și reîncărcăm lista
+                    function clearFilters() {
+                        console.log("clearFilters called");
 
-            document.getElementById("filterSelect").value = '';
-            document.getElementById("searchField").value = '';
-            document.getElementById("nrCrtFilter").value = '';
-            document.getElementById("descriptionFilter").value = '';
-            document.getElementById("createdByFilter").value = '';
-            document.getElementById("deletedByFilter").value = '';
-            document.getElementById("createdOnFilter").value = '';
-            document.getElementById("deletedOnFilter").value = '';
+                    document.getElementById("filterSelect").value = '';
+                    document.getElementById("searchField").value = '';
+                    document.getElementById("nrCrtFilter").value = '';
+                    document.getElementById("descriptionFilter").value = '';
+                    document.getElementById("createdByFilter").value = '';
+                    document.getElementById("deletedByFilter").value = '';
+                    document.getElementById("createdOnFilter").value = '';
+                    document.getElementById("deletedOnFilter").value = '';
 
-            // Reîncărcăm lista fără filtre
-            loadFilteredInputs(1, null, '', '', null, '', '', '', '');
-                     }
-
-
+                    // Reîncărcăm lista fără filtre
+                    loadFilteredInputs(1, null, '', '', null, '', '', '', '');
+                             }
 
 
-            function openDeleteModal(id) {
-                fetch(`@Url.Action("GetDeleteModal", "Cereri")?id=${id}`)
-                    .then(res => res.text())
-                    .then(html => {
-                        document.getElementById("deleteModalContent").innerHTML = html;
-                        new bootstrap.Modal(document.getElementById('deleteModal')).show();
+                    function openDeleteModal(id) {
+                        fetch(`@Url.Action("GetDeleteModal", "Cereri")?id=${id}`)
+                            .then(res => res.text())
+                            .then(html => {
+                                document.getElementById("deleteModalContent").innerHTML = html;
+                                new bootstrap.Modal(document.getElementById('deleteModal')).show();
+                            })
+                            .catch(err => console.error(err));
+                                        }
+
+                    function openDetaliiModal(id) {
+                        fetch(`@Url.Action("GetDetaliiModal", "Cereri")?id=${id}`)
+                            .then(res => res.text())
+                            .then(html => {
+                                document.getElementById("detaliiModalContent").innerHTML = html;
+                                new bootstrap.Modal(document.getElementById('detaliiModal')).show();
+                            })
+                            .catch(err => console.error(err));
+                                        }
+
+                    function openEditModal(id) {
+                        fetch(`@Url.Action("GetEditModal", "Cereri")?id=${id}`)
+                            .then(res => res.text())
+                            .then(html => {
+                                document.getElementById("editModalContent").innerHTML = html;
+                                new bootstrap.Modal(document.getElementById('editModal')).show();
+                            })
+                            .catch(err => console.error(err));
+                                        }
+
+
+
+                    function deleteCerere(id) {
+                                            if (!confirm("Sigur dorești să dezactivezi această cerere?")) return;
+                    fetch(`/Cereri/DeleteConfirmed?id=${id}`, {
+                        method: "POST",
+                    headers: {"Content-Type": "application/json" },
+                    body: JSON.stringify({id})
+                                            })
+                                            .then(res => res.json())
+                                            .then(response => {
+                                                if (response.success) {
+                        bootstrap.Modal.getInstance(document.getElementById('deleteModal'))?.hide();
+                    loadFilteredCereri();
+                                                } else console.warn(response.message);
+                                            })
+                                            .catch(err => {console.error(err); alert("Eroare la dezactivare!"); });
+                                        }
+
+                    function exportCereriExcel() {
+                                            const filter = document.getElementById("filterSelect")?.value || 'toate';
+                    window.location.href = `@Url.Action("FilterCereri", "Cereri")?filter=${encodeURIComponent(filter)}&exportExcel=true`;
+                                        }
+
+
+             //modfica aici
+             function submitEditCerere(id) {
+                    const form = document.getElementById("editCerereForm");
+                    const data = new FormData(form);
+
+                    // Resetăm mesajele și stilurile de eroare anterioare
+                    form.querySelectorAll('.text-danger').forEach(span => span.textContent = '');
+                    form.querySelectorAll('.is-invalid').forEach(input => input.classList.remove('is-invalid'));
+
+                     fetch(`/Cereri/Edit/${id}`, {
+                        method: "POST",
+                        body: data
                     })
-                    .catch(err => console.error(err));
-                                }
+                    .then(res => res.json())
+                    .then(response => {
+                        if (response.success) {
+                            // Închidem modalul și reîncărcăm tabelul
+                            bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+                            loadFilteredCereri();
+                        } else {
+                            if (response.errors) {
+                                for (const key in response.errors) {
+                                    // Afișăm mesajele în span
+                                    const span = form.querySelector(`[data-valmsg-for="${key}"]`);
+                                    if (span) span.textContent = response.errors[key].join(', ');
 
-            function openDetaliiModal(id) {
-                fetch(`@Url.Action("GetDetaliiModal", "Cereri")?id=${id}`)
-                    .then(res => res.text())
-                    .then(html => {
-                        document.getElementById("detaliiModalContent").innerHTML = html;
-                        new bootstrap.Modal(document.getElementById('detaliiModal')).show();
+                                    // Evidențiem input-ul cu clasa is-invalid
+                                    const input = form.querySelector(`[name="${key}"]`);
+                                    if (input) input.classList.add('is-invalid');
+                                }
+                            } else if (response.message) {
+                                alert("Eroare: " + response.message);
+                            }
+                        }
                     })
-                    .catch(err => console.error(err));
-                                }
+                    .catch(err => {
+                        console.error(err);
+                        alert("A apărut o eroare la salvare.");
+                    });
+                }
 
-            function openEditModal(id) {
-                fetch(`@Url.Action("GetEditModal", "Cereri")?id=${id}`)
-                    .then(res => res.text())
-                    .then(html => {
-                        document.getElementById("editModalContent").innerHTML = html;
-                        new bootstrap.Modal(document.getElementById('editModal')).show();
-                    })
-                    .catch(err => console.error(err));
-                                }
+                function loadVersions(cerereId) {
+                    const versionsList = document.getElementById('versionsList');
+                    versionsList.innerHTML = '<div class="text-muted text-center">Se încarcă versiuni...</div>';
 
+                    fetch(`/Cereri/GetAllVersions?id=${cerereId}`)
+                        .then(res => res.json())
+                        .then(data => {
+                            if (!data || data.length === 0) {
+                                versionsList.innerHTML = '<div class="text-muted text-center">Nu există versiuni.</div>';
+                                return;
+                            }
 
+                            let html = '';
 
-            function deleteCerere(id) {
-                                    if (!confirm("Sigur dorești să dezactivezi această cerere?")) return;
-            fetch(`/Cereri/DeleteConfirmed?id=${id}`, {
-                method: "POST",
-            headers: {"Content-Type": "application/json" },
-            body: JSON.stringify({id})
-                                    })
-                                    .then(res => res.json())
-                                    .then(response => {
-                                        if (response.success) {
-                bootstrap.Modal.getInstance(document.getElementById('deleteModal'))?.hide();
-            loadFilteredCereri();
-                                        } else console.warn(response.message);
-                                    })
-                                    .catch(err => {console.error(err); alert("Eroare la dezactivare!"); });
-                                }
+                            data.forEach(v => {
+                                html += `
+                                    <div class="mb-3 p-2 border rounded shadow-sm">
+                                        <div class="fw-bold mb-1">
+                                            Versiunea ${v.version}
+                                            <span class="text-muted">(ID: ${v.id})</span>
+                                        </div>
 
-            function exportCereriExcel() {
-                                    const filter = document.getElementById("filterSelect")?.value || 'toate';
-            window.location.href = `@Url.Action("FilterCereri", "Cereri")?filter=${encodeURIComponent(filter)}&exportExcel=true`;
-                                }
+                                        <div><strong>Creat la:</strong>
+                                            ${new Date(v.createdOn).toLocaleString()}</div>
+
+                                        <div><strong>Denumire:</strong> ${v.name}</div>
+                                        <div><strong>Valoare:</strong> ${v.value}</div>
+                                        <div><strong>Creat de:</strong> ${v.createdBy ?? 'N/A'}</div>
+
+                                        <div><strong>Documente:</strong> ${v.nrDocumente}</div>
+                                    </div>
+                                `;
+                            });
+
+                            versionsList.innerHTML = html;
+                        })
+                        .catch(err => {
+                            versionsList.innerHTML = '<div class="text-danger text-center">Eroare la încărcarea versiunilor</div>';
+                            console.error(err);
+                        });
+                }
 
     </script>
-
-    
 }

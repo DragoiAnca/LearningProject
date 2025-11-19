@@ -18,7 +18,7 @@
         <div class="mb-3">
             <label>Denumire Cerere</label>
             <input asp-for="Name" class="form-control" />
-            <span asp-validation-for="Name" class="text-danger"></span>
+            <span class="text-danger field-validation-valid" data-valmsg-for="Name" data-valmsg-replace="true"></span>
         </div>
 
         <div class="mb-3">
@@ -29,7 +29,7 @@
 
         <div class="mb-3">
             <label>Creat la data:</label>
-            <input asp-for="createdOn" class="form-control" type="date" />
+            <input asp-for="createdOn" class="form-control" type="date" readonly />
             <span asp-validation-for="createdOn" class="text-danger"></span>
         </div>
 
@@ -40,19 +40,23 @@
 
         <div class="mb-3">
             <label>Sters la data:</label>
-            <input asp-for="Deleted" class="form-control" type="date" />
+            <input asp-for="Deleted" class="form-control" type="date" readonly/>
             <span asp-validation-for="Deleted" class="text-danger"></span>
         </div>
 
         <div class="mb-3">
             <label>Creat de:</label>
-            <select asp-for="CreatedByUserId" class="form-select" asp-items="ViewBag.CreatedByUserId"></select>
+            <select asp-for="CreatedByUserId" class="form-select" asp-items="ViewBag.CreatedByUserId" disabled></select>
+            <input type="hidden" asp-for="CreatedByUserId" />
             <span asp-validation-for="CreatedByUserId" class="text-danger"></span>
         </div>
 
         <div class="mb-3">
             <label>Sters de:</label>
-            <select asp-for="DeletedById" class="form-select" asp-items="ViewBag.DeletedById"></select>
+            <select class="form-select" disabled>
+                <option selected>@Model.DeletedBy?.Name</option>
+            </select>
+            <input type="hidden" asp-for="DeletedById" />
             <span asp-validation-for="DeletedById" class="text-danger"></span>
         </div>
 
@@ -66,8 +70,16 @@
 
 <div class="modal-footer">
     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anulează</button>
+
     <button type="button" class="btn btn-primary" onclick="submitEditCerere(@Model.Id)">
         Salvează modificările
+    </button>
+
+
+
+    <!-- Pentru edit cu versiune nouă -->
+    <button type="button" class="btn btn-warning" onclick="submitEditCerere(@Model.Id, true)">
+        Salvează ca versiune nouă
     </button>
 </div>
 

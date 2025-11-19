@@ -16,5 +16,12 @@ namespace LearningProject.Models.ViewModels
         [Required(ErrorMessage = "Numărul este obligatoriu.")]
         [Range(1, 1000000, ErrorMessage = "Numărul trebuie să fie între 1 și 1.000.000.")]
         public double? Value { get; set; }
+
+        // 🔑 Un singur fișier
+        //public IFormFile? UploadedFile { get; set; }
+
+        // 🔑 Acceptă mai multe fișiere
+        public List<IFormFile>? UploadedFiles { get; set; }
+
     }
 }

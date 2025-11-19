@@ -10,11 +10,71 @@ namespace LearningProject.Services
     public class CereriService : ICereri
     {
         private readonly LearningProjectContext _context;
+        private readonly SemaphoreSlim _cacheLock = new SemaphoreSlim(1, 1);
+        private readonly IBufferedFileUploadService _bufferedFileUploadService;
+        private readonly string _fileStoragePath;
+
+
+        private static ViewModelPaginatedListCereri? _cachedData;
+        private static ViewModelPaginatedListCereri? _cachedDataOld;
+        private static DateTime _lastLoad = DateTime.MinValue;
+
+
         public static ViewModelPaginatedListCereri loadedData;
-        public CereriService(LearningProjectContext context)
+        public CereriService(
+            LearningProjectContext context,
+            IBufferedFileUploadService bufferedFileUploadService,
+             IConfiguration configuration)
         {
             _context = context;
+            _bufferedFileUploadService = bufferedFileUploadService;
+            _fileStoragePath = configuration["ApiUrls:FileStoragePath"];
         }
+
+        public async Task<ViewModelPaginatedListCereri> GetCereriAsync(
+       string sortOrder,
+       int pageNumber = 1,
+       int pageSize = 3,
+       string? searchString = null,
+       string filter = "toate",
+       double? nrCrt = null,
+       string? description = null,
+       string? creat_de = null,
+       string? sters_de = null,
+       DateTime? data_creare = null,
+       DateTime? data_stergere = null
+   )
+        {
+            // Cache expirat sau prima încărcare?
+            if (_cachedData == null || (DateTime.UtcNow - _lastLoad).TotalMinutes >= 30)
+            {
+                if (_cachedData == null)
+                {
+                    await ReloadCacheAsync(sortOrder, pageNumber, pageSize,
+                        searchString, filter, nrCrt, description, creat_de, sters_de,
+                        data_creare, data_stergere);
+
+                    return _cachedData!;
+                }
+                else
+                {
+                    _cachedDataOld = _cachedData;
+
+                    _ = ReloadCacheAsync(sortOrder, pageNumber, pageSize,
+                        searchString, filter, nrCrt, description, creat_de, sters_de,
+                        data_creare, data_stergere);
+
+                    return _cachedDataOld!;
+                }
+            }
+
+            return _cachedData!;
+        }
+
+
+
+
+
         // 🔹 Modificăm tipul returnat: ViewModelPaginatedListCereri
         public async Task<ViewModelPaginatedListCereri> GetFilteredCereriAsync(
             string sortOrder,
@@ -93,7 +153,7 @@ namespace LearningProject.Services
                     break;
                 case "toate":
                 default:
-                    break; 
+                    break;
             }
 
             // Sortează DESC după Id
@@ -161,7 +221,7 @@ namespace LearningProject.Services
                 nrCrt = nrCrt,
                 data_creare = data_creare,
                 data_stergere = data_stergere,
-                ListaCereriCuStatus = listaCereriCuStatus 
+                ListaCereriCuStatus = listaCereriCuStatus
             };
 
             return viewModel;
@@ -195,13 +255,13 @@ namespace LearningProject.Services
               data_stergere);
                 return loadedData;
             }
-            else 
+            else
             {
                 return loadedData;
             }
         }
 
-        public async Task<Cereri> CreateCerereAsync(CreateNewCerereModel model, string currentUserName)
+        public async Task<Cereri> CreateCerereAsync(CreateNewCerereModel model, string currentUserName, List<IFormFile>? files = null)
         {
             var user = await _context.User
                 .FirstOrDefaultAsync(w => w.Username == currentUserName);
@@ -241,14 +301,74 @@ namespace LearningProject.Services
                 IsActive = true,
                 CreatedByUser = user,
                 value = (double)model.Value,
-                Documente = listaSignaturi
+                Documente = listaSignaturi,
+                VersionNumber = 1,
+                OldCereri = null,
             };
 
             _context.Cereri.Add(cerere);
             await _context.SaveChangesAsync();
+
+            //cerere
+
+            if (files != null && files.Any())
+            {
+                var cererePath = Path.Combine(_fileStoragePath, cerere.Id.ToString());
+
+                foreach (var file in files)
+                {
+                    await _bufferedFileUploadService.UploadFile(file, cererePath);
+                    cerere.Files.Add(new CerereFile
+                    {
+                        FileName = file.FileName,
+                        FilePath = Path.Combine(cererePath, file.FileName)
+                    });
+                }
+
+                await _context.SaveChangesAsync();
+            }
+
             //
             //trimite mail folosind comunication hub
             return cerere;
+
+        }
+
+
+
+
+
+
+        //Reload Cache
+        public async Task ReloadCacheAsync(
+       string sortOrder,
+       int pageNumber = 1,
+       int pageSize = 3,
+       string? searchString = null,
+       string? filter = "toate",
+       double? nrCrt = null,
+       string? description = null,
+       string? creat_de = null,
+       string? sters_de = null,
+       DateTime? data_creare = null,
+       DateTime? data_stergere = null)
+        {
+            await _cacheLock.WaitAsync();
+            try
+            {
+                _cachedData = await GetFilteredCereriAsync(
+                    sortOrder, pageNumber, pageSize,
+                    searchString, filter, nrCrt, description,
+                    creat_de, sters_de, data_creare, data_stergere
+                );
+
+                _lastLoad = DateTime.UtcNow;
+            }
+            finally
+            {
+                _cacheLock.Release();
+            }
+
 
         }
     }

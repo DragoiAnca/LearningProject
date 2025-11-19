@@ -4,6 +4,7 @@ using LearningProject.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LearningProject.Migrations
 {
     [DbContext(typeof(LearningProjectContext))]
-    partial class LearningProjectContextModelSnapshot : ModelSnapshot
+    [Migration("20251119120941_AddOldCereriIdToCereri")]
+    partial class AddOldCereriIdToCereri
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

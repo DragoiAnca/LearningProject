@@ -146,23 +146,29 @@
                             }
                             @if (User.HasClaim(c => c.Value == "CereriDetails"))
                             {
-                                <button class="btn btn-sm @(item.IsActive ? "btn-primary" : "btn-secondary disabled")"
+                                <button class="btn btn-sm btn-primary"
                                         onclick="openEditModal(@item.Id)"
                                         data-id="@item.Id"
-                                        @(item.IsActive ? "" : "disabled")>
+                                        >
                                     <i class="bi bi-pencil-square"></i>
                                     Edit
                                 </button>
                             }
                             @if (User.IsInRole("CereriDelete"))
                             {
+@* 
 
-                                <button class="btn btn-sm @(item.IsActive ? "btn-danger" : "btn-secondary disabled")"
-                                        onclick="openDeleteModal(@item.Id)"
+                                IsActive = true → cererea e activă
+
+                                AllSigned = false → nu e semnată complet *@
+                                bool canDelete = item.IsActive && !item.AllSigned;
+
+                                <button class="btn btn-sm @(canDelete ? "btn-danger" : "btn-secondary disabled")"
+                                        onclick="@(canDelete ? $"openDeleteModal({item.Id})" : "return false;")"
                                         data-id="@item.Id"
-                                        @(item.IsActive ? "" : "disabled")>
+                                        @(canDelete ? "" : "disabled")>
                                     <i class="bi bi-trash"></i> Șterge
-                                </button>     
+                                </button>
                             }
                         </td>
 

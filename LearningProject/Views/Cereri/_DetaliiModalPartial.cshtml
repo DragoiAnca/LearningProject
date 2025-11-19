@@ -15,53 +15,74 @@
         <div class="card-body text-center">
             <hr />
             <dl class="row mb-0">
-                <dt class="text-secondary">Denumire Cerere:</dt>
-                <dd class="fw-bold">@Html.DisplayFor(model => model.Name)</dd>
 
-                <dt class="text-secondary">Scurta Descriere:</dt>
-                <dd>@Html.DisplayFor(model => model.Description)</dd>
 
-                <dt class="text-secondary">Data Creare Cerere:</dt>
-                <dd>@Html.DisplayFor(model => model.createdOn)</dd>
+                <div class="d-flex justify-content-around">
+                    <div class="p-2">
 
-                <dt class="text-secondary">Status Cerere:</dt>
-                <dd>
-                    @if (Model.IsActive)
-                    {
-                        <span class="badge bg-success">Activ</span>
-                    }
-                    else
-                    {
-                        <span class="badge bg-danger">Inactiv</span>
-                    }
-                </dd>
 
-                <dt class="text-secondary">Status Cerere:</dt>
-                <dd>
-                    @if (Model.Deleted.HasValue)
-                    {
-                        <span class="badge bg-danger">Șters</span>
-                    }
-                    else
-                    {
-                        <span class="badge bg-success">Cererea nu este stearsa.</span>
-                    }
-                </dd>
-                @if (Model.Deleted != null)
-                {
-                    <dt class="text-secondary">Data Stergere Cerere:</dt>
-                    <dd>@Html.DisplayFor(model => model.Deleted)</dd>
-                }
+                        <dt class="text-secondary">Denumire Cerere:</dt>
+                        <dd class="fw-bold">@Html.DisplayFor(model => model.Name)</dd>
 
-                <dt class="text-secondary">Creat De Utilizatorul:</dt>
-                <dd>@Html.DisplayFor(model => model.CreatedByUser.Name)</dd>
+                        <dt class="text-secondary">Scurta Descriere:</dt>
+                        <dd>@Html.DisplayFor(model => model.Description)</dd>
 
-                <dt class="text-secondary">Sters de Utilizatorul:</dt>
-                <dd>@Html.DisplayFor(model => model.DeletedBy.Name)</dd>
+                        <dt class="text-secondary">Data Creare Cerere:</dt>
+                        <dd>@Html.DisplayFor(model => model.createdOn)</dd>
 
-                <dt class="text-secondary">Valoare:</dt>
-                <dd>@Html.DisplayFor(model => model.value)</dd>
+                        <dt class="text-secondary">Status Cerere:</dt>
+                        <dd>
+                            @if (Model.IsActive)
+                            {
+                                <span class="badge bg-success">Activ</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger">Inactiv</span>
+                            }
+                        </dd>
 
+                    </div>
+
+                    
+
+
+                    <div class="p-2">
+
+
+
+
+                        <dt class="text-secondary">Status Cerere:</dt>
+                        <dd>
+                            @if (Model.Deleted.HasValue)
+                            {
+                                <span class="badge bg-danger">Șters</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success">Cererea nu este stearsa.</span>
+                            }
+                        </dd>
+                        @if (Model.Deleted != null)
+                        {
+                            <dt class="text-secondary">Data Stergere Cerere:</dt>
+                            <dd>@Html.DisplayFor(model => model.Deleted)</dd>
+                        }
+
+                        <dt class="text-secondary">Creat De Utilizatorul:</dt>
+                        <dd>@Html.DisplayFor(model => model.CreatedByUser.Name)</dd>
+
+                        <dt class="text-secondary">Sters de Utilizatorul:</dt>
+                        <dd>@Html.DisplayFor(model => model.DeletedBy.Name)</dd>
+
+                        <dt class="text-secondary">Valoare:</dt>
+                        <dd>@Html.DisplayFor(model => model.value)</dd>
+
+
+
+                    </div>
+
+                </div>
 
                 <!--Integrare semnaturi-->
 
@@ -143,6 +164,34 @@
                         </div>
                     </div>
                 </div>
+
+
+
+
+
+                <div class="d-flex flex-row align-items-center mt-3">
+                    <div class="p-2 fw-bold">Versiune curentă:</div>
+                    <div class="p-2">
+                        <span class="badge bg-info text-dark">@Model.VersionNumber </span>
+                    </div>
+                </div>
+
+
+                <button class="btn btn-secondary btn-sm mb-2" type="button"
+                        data-bs-toggle="collapse" data-bs-target="#versionsCollapse"
+                        aria-expanded="false" aria-controls="versionsCollapse"
+                        onclick="loadVersions(@Model.Id)">
+                    Vezi toate versiunile
+                </button>
+
+                <div class="collapse" id="versionsCollapse">
+                    <div class="card card-body" id="versionsList">
+                        <div class="text-muted text-center">Se încarcă versiuni...</div>
+                    </div>
+                </div>
+
+
+
             </dl>
         </div>
     </div>

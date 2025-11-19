@@ -9,6 +9,11 @@ using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
 using System.Security.Claims;
 using LearningProject.Services.Impl;
+using System.Net;
+
+
+
+
 
 namespace LearningProject.Controllers
 {
@@ -17,13 +22,29 @@ namespace LearningProject.Controllers
         private readonly LearningProjectContext _context;
         private readonly ICereriCacheService _cereriService;
         private readonly ICereri _cereriServiceCreate;
+        private readonly IBufferedFileUploadService _bufferedFileUploadService;
 
-        public CereriController(LearningProjectContext context, ICereriCacheService cereriService, ICereri cereriServiceCreate)
+        private readonly string _fileStoragePath;
+
+        public CereriController(
+            LearningProjectContext context,
+            ICereriCacheService cereriService,
+            ICereri cereriServiceCreate,
+            IBufferedFileUploadService bufferedFileUploadService,
+            IConfiguration configuration)
         {
+            _bufferedFileUploadService = bufferedFileUploadService;
             _context = context;
             _cereriService = cereriService;
             _cereriServiceCreate = cereriServiceCreate;
+            _fileStoragePath = configuration["ApiUrls:FileStoragePath"];
         }
+        //public async Task<IActionResult> UploadFileCompletedEventArgs (IFormFile Fisier)
+        //{
+        //    return Ok(Fisier.Name);
+        //} 
+
+
 
         //search field - autofill
         [HttpGet("/GetAutofill")]
@@ -46,6 +67,59 @@ namespace LearningProject.Controllers
 
             return Ok(name_cerere);
         }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAllVersions(int id)
+        {
+            // 1️. găsim cererea pornind de la id
+            var current = await _context.Cereri
+                .Include(c => c.Documente)
+                .Include(c => c.CreatedByUser)
+                .Include(c => c.DeletedBy)
+                .FirstOrDefaultAsync(c => c.Id == id);
+
+            if (current == null)
+                return NotFound("Cererea nu există.");
+
+            // 2️⃣ mergem înapoi până la root
+            var root = current;
+            while (root.OldCereriId.HasValue)
+            {
+                root = await _context.Cereri
+                    .FirstOrDefaultAsync(c => c.Id == root.OldCereriId.Value);
+            }
+
+            // 3️⃣ mergem înainte și generăm lanțul complet
+            var versions = new List<Cereri>();
+            var node = root;
+
+            while (node != null)
+            {
+                versions.Add(node);
+
+                node = await _context.Cereri
+                    .FirstOrDefaultAsync(c => c.OldCereriId == node.Id);
+            }
+
+
+            // 4️⃣ trimitem către client datele formate
+            var result = versions.Select(v => new
+            {
+                v.Id,
+                v.Name,
+                v.Description,
+                v.createdOn,
+                v.value,
+                Version = v.VersionNumber,
+                CreatedBy = v.CreatedByUser?.Username,
+                DeletedBy = v.DeletedBy?.Username,
+                NrDocumente = v.Documente.Count,
+            });
+
+            return Json(result);
+        }
+
+
 
         [Authorize(Roles = "CereriIndex")]
         public async Task<IActionResult> Index(string sortOrder)
@@ -84,7 +158,7 @@ namespace LearningProject.Controllers
      [FromQuery] DateTime? data_creare,
      [FromQuery] DateTime? data_stergere)
         {
-            var pagedCereri = await _cereriService.GetCachedDataAsync(
+            var pagedCereri = await _cereriServiceCreate.GetFilteredCereriAsync(
                 sortOrder,
                 pageNumber ?? 1,
                 3,
@@ -275,13 +349,37 @@ namespace LearningProject.Controllers
                 return View(model);
 
             var currentUserName = User.FindFirstValue(ClaimTypes.Name)
-                .Replace("MMRMAKITA\\", "");
+                                      .Replace("MMRMAKITA\\", "");
 
+            // 1️. Creeaza cererea
             var cerere = await _cereriServiceCreate.CreateCerereAsync(model, currentUserName);
 
+            // 2. Upload fișiere dacă există
+            if (model.UploadedFiles != null && model.UploadedFiles.Any())
+            {
+                var cererePath = Path.Combine(_fileStoragePath, cerere.Id.ToString());
+
+                foreach (var file in model.UploadedFiles)
+                {
+                    await _bufferedFileUploadService.UploadFile(file, cererePath);
+
+                    cerere.Files.Add(new CerereFile
+                    {
+                        FileName = file.FileName,
+                        FilePath = Path.Combine(cererePath, file.FileName)
+                    });
+                }
 
 
-            // Daca vine din form MVC
+                //Codul actual dat de Chatty
+                //aici filtreaza, sorteaza, nu creaza o cerere noua...
+                //await _cereriServiceCreate.GetFilteredCereriAsync(cerere);
+
+                //Codul vechi
+               // var cerere = await _cereriServiceCreate.CreateCerereAsync(model, currentUserName);
+
+            }
+
             return RedirectToAction("FilterCereri");
         }
 
@@ -322,38 +420,127 @@ namespace LearningProject.Controllers
             return View(cereri);
         }
 
+
+        // Edit 
+        // Edit / Update cu versiuni
         [Authorize(Roles = "CereriEdit")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, Cereri cereri)
+        public async Task<IActionResult> Edit(int id, Cereri model)
         {
-            if (id != cereri.Id)
-                return NotFound();
+            if (id != model.Id)
+                return Json(new { success = false, message = "ID invalid" });
 
-            // ✅ Eliminăm erorile pentru CreatedByUser (nu se trimite din form)
-            ModelState.Remove(nameof(cereri.CreatedByUser));
+            // Eliminăm erorile legate de navigational properties care nu vin din form
+            ModelState.Remove(nameof(model.CreatedByUser));
+            ModelState.Remove(nameof(model.DeletedBy));
 
-            if (ModelState.IsValid)
+            // Validare model
+            if (!ModelState.IsValid)
             {
-                try
-                {
-                    _context.Update(cereri); // folosești direct obiectul din form
-                    await _context.SaveChangesAsync();
-                    return RedirectToAction(nameof(FilterCereri));
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!CereriExists(cereri.Id))
-                        return NotFound();
-                    else
-                        throw;
-                }
+                var errors = ModelState
+                             .Where(ms => ms.Value.Errors.Any())
+                             .ToDictionary(
+                                 kv => kv.Key.Replace("model.", ""), // numele câmpului din form
+                                 kv => kv.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                             );
+
+                return Json(new { success = false, errors });
             }
 
-            // Refacem dropdownurile pentru view în caz de eroare
-            ViewData["CreatedByUserId"] = new SelectList(_context.User, "IdUser", "Name", cereri.CreatedByUserId);
-            ViewData["DeletedById"] = new SelectList(_context.User, "IdUser", "Name", cereri.DeletedById);
-            return View(cereri);
+            // Preluăm cererea existentă din DB
+            var oldCerere = await _context.Cereri
+                                          .Include(c => c.Documente)
+                                          .FirstOrDefaultAsync(c => c.Id == id);
+
+            if (oldCerere == null)
+                return Json(new { success = false, message = "Cererea nu a fost găsită." });
+
+            try
+            {
+                //Daca e semnata creeaza versiune noua 
+                if (oldCerere.Documente.All(d => d.Status == StatusDocument.Semnat))
+                {
+                    var newCerere = new Cereri
+                    {
+                        Name = model.Name,
+                        Description = model.Description,
+                        createdOn = DateTime.Now,
+                        IsActive = true,
+                        CreatedByUserId = oldCerere.CreatedByUserId,
+                        value = model.value,
+                        OldCereri = oldCerere,                
+                        VersionNumber = (oldCerere.VersionNumber ?? 1) + 1,
+                        Documente = oldCerere.Documente.Select(d => new Signature
+                        {
+                            ClaimCanSignId = d.ClaimCanSignId,
+                            Status = d.Status,   
+                            order = d.order
+                        }).ToList()
+                    };
+
+                    _context.Cereri.Add(newCerere);
+                    await _context.SaveChangesAsync();
+
+                    return Json(new
+                    {
+                        success = true,
+                        message = $"Cererea a fost actualizată. Versiunea curentă: {newCerere.VersionNumber}"
+                    });
+                }
+                else
+                {
+                    // Cerere NESemnată → update direct
+                    oldCerere.Name = model.Name;
+                    oldCerere.Description = model.Description;
+                    oldCerere.value = model.value;
+
+                    // OldCereri rămâne null, VersionNumber rămâne 1
+                    _context.Update(oldCerere);
+                    await _context.SaveChangesAsync();
+
+                    return Json(new { success = true, message = "Cererea a fost actualizată." });
+                }
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!CereriExists(model.Id))
+                    return Json(new { success = false, message = "Cererea nu există." });
+                else
+                    throw;
+            }
+        }
+
+
+        //varianta updata de edit 
+        [Authorize(Roles = "CereriEdit")]
+        [HttpPost]
+        public async Task<IActionResult> EditVersioned(int id, Cereri model)
+        {
+            var oldCerere = await _context.Cereri
+                                          .Include(c => c.Documente)
+                                          .FirstOrDefaultAsync(c => c.Id == id);
+
+            if (oldCerere == null) return NotFound("Cererea nu a fost găsită.");
+
+            var newCerere = new Cereri
+            {
+                Name = model.Name,
+                Description = model.Description,
+                createdOn = DateTime.Now,
+                IsActive = true,
+                CreatedByUserId = oldCerere.CreatedByUserId,
+                value = model.value,
+                OldCereri = oldCerere,
+                VersionNumber = (oldCerere.VersionNumber ?? 1) + 1,  // 2, 3, ...
+            };
+
+          
+
+            _context.Cereri.Add(newCerere);
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, message = $"Cererea a fost actualizată. Versiunea curentă: {newCerere.VersionNumber}" });
         }
 
 
