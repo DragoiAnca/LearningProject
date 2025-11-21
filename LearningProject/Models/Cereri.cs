@@ -1,5 +1,6 @@
 ﻿using static LearningProject.Models.Signature;
 using System.ComponentModel.DataAnnotations;
+using LearningProject.Models.DraftModel;
 
 namespace LearningProject.Models
 {
@@ -29,8 +30,9 @@ namespace LearningProject.Models
 
         // Lista de fisiere asociate
         public ICollection<CerereFile> Files { get; set; } = new List<CerereFile>();
-
-
+        
+        //integrarea Draft
+        public bool isDraft {  get; set; } //true sau false 
 
     }
 }

@@ -1,5 +1,6 @@
 ﻿using LearningProject.Data;
 using LearningProject.Models;
+using LearningProject.Models.DraftModel;
 using LearningProject.Models.ViewModels;
 using LearningProject.Services.Impl;
 using Microsoft.Data.SqlClient;
@@ -227,62 +228,24 @@ namespace LearningProject.Services
             return viewModel;
         }
 
-        public async Task<ViewModelPaginatedListCereri> GetLoadedData(string sortOrder,
-            int pageNumber = 1,
-            int pageSize = 3,
-            string? searchString = null,
-            string? filter = "toate",
-            double? nrCrt = null,
-            string? description = null,
-            string? creat_de = null,
-            string? sters_de = null,
-            DateTime? data_creare = null,
-            DateTime? data_stergere = null)
+        public async Task<Cereri> CreateCerereAsync(CreateNewCerereModel model, string currentUserName, List<IFormFile>? files)
         {
-            if (loadedData == null)
-            {
-                loadedData = await GetFilteredCereriAsync(
-             sortOrder,
-            pageNumber,
-             pageSize,
-              searchString,
-              filter,
-            nrCrt,
-             description,
-              creat_de,
-             sters_de,
-              data_creare,
-              data_stergere);
-                return loadedData;
-            }
-            else
-            {
-                return loadedData;
-            }
-        }
-
-        public async Task<Cereri> CreateCerereAsync(CreateNewCerereModel model, string currentUserName, List<IFormFile>? files = null)
-        {
-            var user = await _context.User
-                .FirstOrDefaultAsync(w => w.Username == currentUserName);
-
-            if (user == null)
-                throw new Exception("User not found.");
+            var user = await _context.User.FirstOrDefaultAsync(w => w.Username == currentUserName);
+            if (user == null) throw new Exception("User not found.");
 
             // Construim lista de semnături
             var signatureRoles = new Dictionary<string, int>
-        {
-            { "Manager", 2 },
-            { "Admin", 3 },
-            { "Checker", 1 }
-        };
+    {
+        { "Manager", 2 },
+        { "Admin", 3 },
+        { "Checker", 1 }
+    };
 
             ICollection<Signature> listaSignaturi = new List<Signature>();
 
             foreach (var item in signatureRoles)
             {
                 var claim = await _context.Claim.FirstOrDefaultAsync(c => c.name == item.Key);
-
                 if (claim != null)
                 {
                     listaSignaturi.Add(new Signature
@@ -293,45 +256,71 @@ namespace LearningProject.Services
                 }
             }
 
-            var cerere = new Cereri
+            // Verificăm dacă există draft cu același DraftId
+            var draft = await _context.Cereri
+                .Include(c => c.Files)
+                .FirstOrDefaultAsync(c => c.Id == model.DraftId && c.isDraft);
+
+            Cereri cerere;
+
+            if (draft != null)
             {
-                Name = model.Name,
-                Description = model.Description,
-                createdOn = DateTime.Now,
-                IsActive = true,
-                CreatedByUser = user,
-                value = (double)model.Value,
-                Documente = listaSignaturi,
-                VersionNumber = 1,
-                OldCereri = null,
-            };
+                // Actualizăm draftul existent și îl transformăm în cerere finală
+                draft.Name = model.Name;
+                draft.Description = model.Description;
+                draft.value = model.Value ?? draft.value;
+                draft.IsActive = true;
+                draft.isDraft = false; // nu mai e draft
+                draft.VersionNumber = draft.VersionNumber ?? 1;
+                draft.Documente = listaSignaturi;
 
-            _context.Cereri.Add(cerere);
-            await _context.SaveChangesAsync();
-
-            //cerere
-
-            if (files != null && files.Any())
+                cerere = draft;
+            }
+            else
             {
-                var cererePath = Path.Combine(_fileStoragePath, cerere.Id.ToString());
-
-                foreach (var file in files)
+                // Nu există draft → creăm cerere nouă
+                cerere = new Cereri
                 {
-                    await _bufferedFileUploadService.UploadFile(file, cererePath);
-                    cerere.Files.Add(new CerereFile
-                    {
-                        FileName = file.FileName,
-                        FilePath = Path.Combine(cererePath, file.FileName)
-                    });
-                }
+                    Name = model.Name,
+                    Description = model.Description,
+                    createdOn = DateTime.Now,
+                    IsActive = true,
+                    CreatedByUser = user,
+                    value = model.Value ?? 0,
+                    Documente = listaSignaturi,
+                    VersionNumber = 1,
+                    OldCereri = null
+                };
 
-                await _context.SaveChangesAsync();
+                _context.Cereri.Add(cerere);
             }
 
-            //
-            //trimite mail folosind comunication hub
-            return cerere;
+            // Salvează fișierele atașate dacă există
+            if (files != null && files.Count > 0)
+            {
+                string folder = Path.Combine(_fileStoragePath, cerere.Id.ToString());
+                Directory.CreateDirectory(folder);
 
+                foreach (var f in files)
+                {
+                    var filePath = Path.Combine(folder, f.FileName);
+                    using var stream = new FileStream(filePath, FileMode.Create);
+                    await f.CopyToAsync(stream);
+
+                    cerere.Files.Add(new CerereFile
+                    {
+                        FileName = f.FileName,
+                        FilePath = filePath,
+                        CereriId = cerere.Id
+                    });
+                }
+            }
+
+            await _context.SaveChangesAsync();
+
+            // Poți trimite mail folosind communication hub aici
+
+            return cerere;
         }
 
 

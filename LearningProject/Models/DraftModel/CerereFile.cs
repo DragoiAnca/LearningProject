@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
 
-namespace LearningProject.Models
+namespace LearningProject.Models.DraftModel
 {
     public class CerereFile
     {

@@ -1,19 +1,20 @@
-﻿using LearningProject.Data;
+﻿using Humanizer;
+using LearningProject.Controllers.ViewComponents;
+using LearningProject.Data;
 using LearningProject.Models;
+using LearningProject.Models.DraftModel;
 using LearningProject.Models.ViewModels;
+using LearningProject.Services;
+using LearningProject.Services.Impl;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
-using System.Security.Claims;
-using LearningProject.Services.Impl;
 using System.Net;
-
-
-
-
+using System.Security.Claims;
 
 namespace LearningProject.Controllers
 {
@@ -39,12 +40,11 @@ namespace LearningProject.Controllers
             _cereriServiceCreate = cereriServiceCreate;
             _fileStoragePath = configuration["ApiUrls:FileStoragePath"];
         }
+
         //public async Task<IActionResult> UploadFileCompletedEventArgs (IFormFile Fisier)
         //{
         //    return Ok(Fisier.Name);
         //} 
-
-
 
         //search field - autofill
         [HttpGet("/GetAutofill")]
@@ -301,13 +301,47 @@ namespace LearningProject.Controllers
             return View(cerere);
         }
 
+
+        //Creare o ciorna by default
         [Authorize(Roles = "CereriCreate")]
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
             var ADuser = User.Identity.Name.Replace("MMRMAKITA\\", "");
+            var id_user = _context.User.Where(w => w.Username == ADuser).First();
+
+            var draft = await _context.Cereri
+                  .Include(c => c.Files)
+                  .FirstOrDefaultAsync(c => c.CreatedByUser.Username == ADuser && c.isDraft);
+
+            if (draft == null)
+            {
+                // Creează draft gol
+                draft = new Cereri
+                {
+                    CreatedByUserId = id_user.IdUser,
+                    createdOn = DateTime.Now,
+                    isDraft = true,
+                    Name = "",           
+                    Description = "",     
+                    value = 0 
+                };
+                _context.Cereri.Add(draft);
+                await _context.SaveChangesAsync();
+            }
+
+            var model = new CreateNewCerereModel
+            {
+                Name = draft.Name,
+                Description = draft.Description,
+                Value = draft.value,
+                DraftId = draft.Id,
+                ExistingFiles = draft.Files.ToList() 
+             };
+
             ViewData["CreatedByUserId"] = new SelectList(_context.User, "IdUser", "Username");
             ViewData["DeletedById"] = new SelectList(_context.User, "IdUser", "Username");
-            return View();
+
+            return View(model);
         }
 
        // [Authorize(Roles = "Checker,Manager")]
@@ -336,52 +370,89 @@ namespace LearningProject.Controllers
             _context.Update(signature);
             await _context.SaveChangesAsync();
 
-
             return RedirectToAction("FilterCereri");
         }
 
 
-        [Authorize(Roles = "CereriCreate")]
+        //se ocupa de finalizarea cereri 
         [HttpPost]
-        public async Task<IActionResult> Create(CreateNewCerereModel model)// description, name, value
+        [Authorize(Roles = "CereriCreate")]
+        public async Task<IActionResult> Create(CreateNewCerereModel model)
         {
-            if (!ModelState.IsValid)
+            if (!ModelState.IsValid) 
                 return View(model);
 
-            var currentUserName = User.FindFirstValue(ClaimTypes.Name)
-                                      .Replace("MMRMAKITA\\", "");
+            var username = User.Identity.Name.Replace("MMRMAKITA\\", "");
 
-            // 1️. Creeaza cererea
-            var cerere = await _cereriServiceCreate.CreateCerereAsync(model, currentUserName);
+            if (username == null) 
+                throw new Exception("User not found.");
 
-            // 2. Upload fișiere dacă există
-            if (model.UploadedFiles != null && model.UploadedFiles.Any())
+
+            // Construim lista de semnături
+            var signatureRoles = new Dictionary<string, int>
+ {
+     { "Manager", 2 },
+     { "Admin", 3 },
+     { "Checker", 1 }
+ };
+
+            ICollection<Signature> listaSignaturi = new List<Signature>();
+
+            foreach (var item in signatureRoles)
             {
-                var cererePath = Path.Combine(_fileStoragePath, cerere.Id.ToString());
-
-                foreach (var file in model.UploadedFiles)
+                var claim = await _context.Claim.FirstOrDefaultAsync(c => c.name == item.Key);
+                if (claim != null)
                 {
-                    await _bufferedFileUploadService.UploadFile(file, cererePath);
-
-                    cerere.Files.Add(new CerereFile
+                    listaSignaturi.Add(new Signature
                     {
-                        FileName = file.FileName,
-                        FilePath = Path.Combine(cererePath, file.FileName)
+                        ClaimCanSign = claim,
+                        order = item.Value
                     });
                 }
+            }
+
+            // Verificăm dacă există draft cu același DraftId
+
+            var draft = await _context.Cereri
+                .Include(d => d.Files)
+                .FirstOrDefaultAsync(d => d.Id == model.DraftId && d.isDraft);
+
+            if (draft != null)
+            {
+                model.Name ??= draft.Name;
+                model.Description ??= draft.Description;
+                model.Value ??= draft.value;
+            }
+
+            var cerere = await _cereriServiceCreate.CreateCerereAsync(model, username);
 
 
-                //Codul actual dat de Chatty
-                //aici filtreaza, sorteaza, nu creaza o cerere noua...
-                //await _cereriServiceCreate.GetFilteredCereriAsync(cerere);
+            //cititre fisier 
+            //if (draft?.Files != null && draft.Files.Any())
+            //{
+            //    string finalFolder = Path.Combine(_fileStoragePath, cerere.Id.ToString());
+            //    Directory.CreateDirectory(finalFolder);
 
-                //Codul vechi
-               // var cerere = await _cereriServiceCreate.CreateCerereAsync(model, currentUserName);
+            //    foreach (var f in draft.Files)
+            //    {
+            //        var newPath = Path.Combine(finalFolder, f.FileName);
+            //        System.IO.File.Move(f.FilePath, newPath);
 
+            //        f.FilePath = newPath;
+            //    }
+            //}
+
+            // Șterge draftul
+            if (draft != null)
+            {
+                _context.Cereri.Remove(draft);
+                await _context.SaveChangesAsync();
             }
 
             return RedirectToAction("FilterCereri");
         }
+
+
 
         public IActionResult FilterCereriBy(string filter)
         {
@@ -535,8 +606,6 @@ namespace LearningProject.Controllers
                 VersionNumber = (oldCerere.VersionNumber ?? 1) + 1,  // 2, 3, ...
             };
 
-          
-
             _context.Cereri.Add(newCerere);
             await _context.SaveChangesAsync();
 
@@ -634,7 +703,7 @@ namespace LearningProject.Controllers
         [Authorize(Roles = "CereriDelete")]
         [HttpPost]
         // [ValidateAntiForgeryToken] // Poți reactiva dacă folosești token-ul
-        public async Task<IActionResult> CerereStearsa(int id)
+        public async Task<IActionResult> CerereStearsa(int id,IFormFile asd)
         {
             try
             {
@@ -655,7 +724,7 @@ namespace LearningProject.Controllers
                     success = true,
                     message = $"Cererea cu ID {id} a fost ștearsă cu succes.",
                     redirectUrl = Url.Action("FilterCereri")
-                });;
+                });
             }
             catch (Exception ex)
             {
@@ -669,7 +738,83 @@ namespace LearningProject.Controllers
         }
 
 
-       
+        //se ocupa doar de actualizarea campurilor
+        [HttpPut]
+        public async Task<IActionResult> SaveDraft([FromForm] CreateNewCerereModel dto)
+        {
+            Cereri draft;
+
+            if (dto.DraftId == 0)
+            {
+                // Creează draft nou
+                var username = User.Identity.Name.Replace("MMRMAKITA\\", "");
+                var user = _context.User.First(u => u.Username == username);
+
+                draft = new Cereri
+                {
+                    CreatedByUserId = user.IdUser,
+                    createdOn = DateTime.Now,
+                    isDraft = true
+                };
+                _context.Cereri.Add(draft);
+                await _context.SaveChangesAsync();
+            }
+            else
+            {
+                draft = await _context.Cereri
+                    .Include(d => d.Files)
+                    .FirstOrDefaultAsync(d => d.Id == dto.DraftId);
+
+                if (draft == null) return NotFound("Draft not found.");
+            }
+
+            // Actualizează câmpuri
+            if (!string.IsNullOrEmpty(dto.Name)) draft.Name = dto.Name;
+            if (!string.IsNullOrEmpty(dto.Description)) draft.Description = dto.Description;
+            if (dto.Value.HasValue) draft.value = dto.Value.Value;
+
+            // Salvează fisiere și pregătește lista pentru JS
+            var uploadedFilesList = new List<object>();
+            if (dto.UploadedFiles != null && dto.UploadedFiles.Count > 0)
+            {
+                string draftFolder = Path.Combine(_fileStoragePath, draft.Id.ToString());
+                Directory.CreateDirectory(draftFolder);
+
+                foreach (var uploadedFile in dto.UploadedFiles)
+                {
+                    var filePath = Path.Combine(draftFolder, uploadedFile.FileName);
+                    using var stream = new FileStream(filePath, FileMode.Create);
+                    await uploadedFile.CopyToAsync(stream);
+
+                    var cerereFile = new CerereFile
+                    {
+                        FileName = uploadedFile.FileName,
+                        FilePath = filePath,
+                        CereriId = draft.Id
+                    };
+                    draft.Files.Add(cerereFile);
+
+                    // Pregătim obiect pentru JS
+                    uploadedFilesList.Add(new
+                    {
+                        FileName = cerereFile.FileName,
+                        FilePath = $"/uploads/{draft.Id}/{cerereFile.FileName}" // sau ruta accesibilă public
+                    });
+                }
+            }
+
+            draft.isDraft = true;
+            await _context.SaveChangesAsync();
+
+            // Returnăm DraftId și lista fișierelor pentru JS
+            return Ok(new
+            {
+                DraftId = draft.Id,
+                Files = uploadedFilesList
+            });
+        }
+
+
 
     }
 }

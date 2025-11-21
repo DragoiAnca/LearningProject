@@ -1,9 +1,12 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using LearningProject.Models.DraftModel;
+using System.ComponentModel.DataAnnotations;
 
 namespace LearningProject.Models.ViewModels
 {
     public class CreateNewCerereModel
     {
+        public int DraftId { get; set; }   // ← important pentru save draft
+
         [Required(ErrorMessage = "Denumirea este obligatorie.")]
         [StringLength(100, ErrorMessage = "Denumirea nu poate depăși 100 de caractere.")]
         public string Name { get; set; }
@@ -21,7 +24,18 @@ namespace LearningProject.Models.ViewModels
         //public IFormFile? UploadedFile { get; set; }
 
         // 🔑 Acceptă mai multe fișiere
+        // Citirea informatiei 
+
+        // Pentru fișiere noi încărcate
+
         public List<IFormFile>? UploadedFiles { get; set; }
+
+        // Pentru fișiere deja existente
+
+        public List<CerereFile>? ExistingFiles { get; set; }
+
+
+        // CerereFile
 
     }
 }

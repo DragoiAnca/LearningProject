@@ -1,5 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
-using LearningProject.Models;
+﻿using LearningProject.Models;
+using LearningProject.Models.DraftModel;
+using Microsoft.EntityFrameworkCore;
 
 namespace LearningProject.Data
 {
@@ -22,6 +23,7 @@ namespace LearningProject.Data
         public DbSet<LearningProject.Models.Course> Courses { get; set; }
 
         public DbSet<LearningProject.Models.Signature> Signatures { get; set; }
+
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -63,15 +65,15 @@ namespace LearningProject.Data
     .HasForeignKey(u => u.id_departament)
     .IsRequired(false);
 
+            modelBuilder.Entity<CerereFile>()
+    .HasOne(f => f.Cerere)
+    .WithMany(c => c.Files)
+    .HasForeignKey(f => f.CereriId)
+    .OnDelete(DeleteBehavior.Cascade);
 
-
-
-
+            //view reference
             modelBuilder.Entity<V_employees>().HasNoKey().ToView("V_employees");
 
-
-
         }
-
     }
 }

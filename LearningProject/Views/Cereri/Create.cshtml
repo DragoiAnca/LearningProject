@@ -3,44 +3,92 @@
 @{
     ViewData["Title"] = "Create";
 }
+
 <div class="container mt-4">
     <div class="card shadow-lg border-0">
         <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-            <h4 class="mb-0">Creează o cerere nouă</h4>
+            <h4 class="mb-0">
+                <i class="bi bi-file-earmark-richtext"></i>
+                Creează o cerere nouă
+                </h4>
         </div>
 
         <div class="row justify-content-center" style="margin: 10px;">
             <div class="col-md-6">
+                <!-- FORM finalizare cerere -->
                 <form asp-action="Create" enctype="multipart/form-data" novalidate>
                     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
+                    <!-- HIDDEN INPUT DraftId -->
+                    <input type="hidden" asp-for="DraftId" />
+
                     <div class="form-group mb-3">
-                        <label>Denumire Cerere</label>
+                        <p class="fw-bold">Denumire Cerere</p>
                         <input asp-for="Name" class="form-control" />
                         <span asp-validation-for="Name" class="text-danger"></span>
                     </div>
 
                     <div class="form-group mb-3">
-                        <label>Descriere</label>
+                        <p class="fw-bold">Descriere</p>
                         <input asp-for="Description" class="form-control" />
                         <span asp-validation-for="Description" class="text-danger"></span>
                     </div>
 
                     <div class="form-group mb-3">
-                        <label>Valoare</label>
+                        <p class="fw-bold">Valoare</p>
                         <input asp-for="Value" type="number" step="0.01" class="form-control" />
                         <span asp-validation-for="Value" class="text-danger"></span>
                     </div>
 
-                    <!-- 🆕 INPUT UPLOAD FIȘIER -->
+
                     <div class="form-group mb-3">
-                        <label>Încarcă documente</label>
-                        <input asp-for="UploadedFiles" type="file" class="form-control" multiple />
+                        <p class="fw-bold">Încarcă documente</p>
+
+                        <!-- Input real, ascuns -->
+                        <input asp-for="UploadedFiles" type="file" id="customFile" class="d-none" multiple />
+
+                        <!-- Buton personalizat -->
+                        <button type="button" class="btn btn-primary" onclick="document.getElementById('customFile').click();">
+                            <i class="bi bi-upload"></i>
+                            Alege fișiere
+                        </button>
+
+                        <!-- Label pentru afișarea numelor fișierelor -->
+                        @if (Model.ExistingFiles == null || !Model.ExistingFiles.Any())
+                        {
+                            <span id="fileNames" class="ms-2 text-muted">Niciun fișier selectat</span>
+                        }
+
                         <span asp-validation-for="UploadedFiles" class="text-danger"></span>
                     </div>
 
+                    <!-- AFISARE FISIERE EXISTENTE -->
+                    <ul id="existingFilesList">
+                            @if (Model.ExistingFiles != null && Model.ExistingFiles.Any())
+                    {
+                        <div class="mb-3">
+                            <label>Fișiere deja încărcate:</label>
+
+                                @if (Model.ExistingFiles != null && Model.ExistingFiles.Any())
+                                {
+                                    @foreach (var file in Model.ExistingFiles)
+                                    {
+                                        <li>
+                                            <a href="@Url.Action("DownloadFile", "Cereri", new { id = file.Id })" target="_blank">
+                                                @file.FileName
+                                            </a>
+                                        </li>
+                                    }
+                                }
+                        </div>
+                    }
+                    </ul>
+            <span id="uploadError" class="text-danger"></span>
+
+
+
                     <div class="form-group text-center">
-                        <input type="submit" value="Create" class="btn btn-primary" />
+                        <input type="submit" value="Creează Cererea" class="btn btn-primary" />
                     </div>
                 </form>
             </div>
@@ -48,25 +96,58 @@
     </div>
 </div>
 
+<script>
 
-@section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    document.addEventListener("DOMContentLoaded", function () {
 
-    <script>
-        const valueInput = document.querySelector("input[name='Value']");
+        // DraftId din hidden input
+        const draftInput = document.querySelector("input[name='DraftId']");
+        let draftId = draftInput ? draftInput.value : 0;
+        const inputs = document.querySelectorAll("input[type='text'], input[type='number']");
+        const fileInput = document.querySelector("input[type='file']");
+        const fileList = document.getElementById("existingFilesList");
+        const fileNamesSpan = document.getElementById("fileNames");
 
-        if (valueInput) {
-            // Blochează literele și simbolurile care nu au sens pentru numere întregi
-            valueInput.addEventListener("keydown", e => {
-                if (["e", "E", "+", "-", "."].includes(e.key)) e.preventDefault();
-            });
+        if (!fileInput) return;
 
-            // Permite doar cifre
-            valueInput.addEventListener("input", e => {
-                e.target.value = e.target.value.replace(/\D/g, ''); // elimină tot ce nu e cifră
+        function saveDraft(data = {}) {
+            const formData = new FormData();
+
+            formData.append("DraftId", draftId);
+
+            for (const key in data) {
+                if (key === "UploadedFiles") {
+                    for (let f of data[key]) formData.append("UploadedFiles", f);
+                } else {
+                    formData.append(key, data[key]);
+                }
+            }
+
+            fetch("/Cereri/SaveDraft", {
+                method: "PUT",
+                body: formData
+            })
+            .then(r => r.json())
+            .then(resp => {
+                if (resp.draftId) {
+                    draftId = resp.draftId;
+                    if (draftInput) draftInput.value = draftId;
+                }
+            })
+            .catch(e => console.error("Save draft error:", e));
+        }
+
+        // Autosave pentru inputuri
+        inputs.forEach(input => {
+            input.addEventListener("focusout", () => saveDraft({ [input.name]: input.value }));
+        });
+
+        // Autosave pentru fisiere
+        if (fileInput) {
+            fileInput.addEventListener("change", e => {
+                const files = e.target.files;
+                if (files.length > 0) saveDraft({ UploadedFiles: files });
             });
         }
-    </script>
-}
+    });
+</script>

@@ -19,7 +19,10 @@ namespace LearningProject.Services.Impl
            DateTime? data_stergere = null
            );
 
-        Task<Cereri> CreateCerereAsync(CreateNewCerereModel model, string currentUserName, List<IFormFile>? files = null);
+        Task<Cereri> CreateCerereAsync(
+            CreateNewCerereModel model,
+            string currentUserName,
+            List<IFormFile>? files = null);
 
         Task ReloadCacheAsync(string sortOrder,
         int pageNumber = 1,

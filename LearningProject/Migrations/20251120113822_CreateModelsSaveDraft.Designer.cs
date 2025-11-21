@@ -4,6 +4,7 @@ using LearningProject.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LearningProject.Migrations
 {
     [DbContext(typeof(LearningProjectContext))]
-    partial class LearningProjectContextModelSnapshot : ModelSnapshot
+    [Migration("20251120113822_CreateModelsSaveDraft")]
+    partial class CreateModelsSaveDraft
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -35,6 +38,32 @@ namespace LearningProject.Migrations
                     b.HasIndex("RolesIdRol");
 
                     b.ToTable("ClaimRoluri");
+                });
+
+            modelBuilder.Entity("LearningProject.Models.CerereFile", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CereriId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FilePath")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CereriId");
+
+                    b.ToTable("CerereFile");
                 });
 
             modelBuilder.Entity("LearningProject.Models.Cereri", b =>
@@ -73,9 +102,6 @@ namespace LearningProject.Migrations
 
                     b.Property<DateTime>("createdOn")
                         .HasColumnType("datetime2");
-
-                    b.Property<bool>("isDraft")
-                        .HasColumnType("bit");
 
                     b.Property<double>("value")
                         .HasColumnType("float");
@@ -152,7 +178,7 @@ namespace LearningProject.Migrations
                     b.ToTable("Departamente");
                 });
 
-            modelBuilder.Entity("LearningProject.Models.DraftModel.CerereFile", b =>
+            modelBuilder.Entity("LearningProject.Models.DraftModel.CerereDraft", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -160,7 +186,40 @@ namespace LearningProject.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("CereriId")
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal?>("Value")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CerereDrafts");
+                });
+
+            modelBuilder.Entity("LearningProject.Models.DraftModel.CerereFileDraft", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("CerereDraftId")
                         .HasColumnType("int");
 
                     b.Property<string>("FileName")
@@ -173,9 +232,9 @@ namespace LearningProject.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CereriId");
+                    b.HasIndex("CerereDraftId");
 
-                    b.ToTable("CerereFile");
+                    b.ToTable("CerereFileDrafts");
                 });
 
             modelBuilder.Entity("LearningProject.Models.Enrollment", b =>
@@ -419,6 +478,17 @@ namespace LearningProject.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("LearningProject.Models.CerereFile", b =>
+                {
+                    b.HasOne("LearningProject.Models.Cereri", "Cerere")
+                        .WithMany("Files")
+                        .HasForeignKey("CereriId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Cerere");
+                });
+
             modelBuilder.Entity("LearningProject.Models.Cereri", b =>
                 {
                     b.HasOne("LearningProject.Models.User", "CreatedByUser")
@@ -443,15 +513,11 @@ namespace LearningProject.Migrations
                     b.Navigation("OldCereri");
                 });
 
-            modelBuilder.Entity("LearningProject.Models.DraftModel.CerereFile", b =>
+            modelBuilder.Entity("LearningProject.Models.DraftModel.CerereFileDraft", b =>
                 {
-                    b.HasOne("LearningProject.Models.Cereri", "Cerere")
+                    b.HasOne("LearningProject.Models.DraftModel.CerereDraft", null)
                         .WithMany("Files")
-                        .HasForeignKey("CereriId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Cerere");
+                        .HasForeignKey("CerereDraftId");
                 });
 
             modelBuilder.Entity("LearningProject.Models.Enrollment", b =>
@@ -526,6 +592,11 @@ namespace LearningProject.Migrations
             modelBuilder.Entity("LearningProject.Models.Course", b =>
                 {
                     b.Navigation("Enrollments");
+                });
+
+            modelBuilder.Entity("LearningProject.Models.DraftModel.CerereDraft", b =>
+                {
+                    b.Navigation("Files");
                 });
 
             modelBuilder.Entity("LearningProject.Models.Roluri", b =>
