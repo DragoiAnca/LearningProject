@@ -1,19 +1,15 @@
-﻿using Humanizer;
-using LearningProject.Controllers.ViewComponents;
-using LearningProject.Data;
+﻿using LearningProject.Data;
 using LearningProject.Models;
 using LearningProject.Models.DraftModel;
 using LearningProject.Models.ViewModels;
-using LearningProject.Services;
 using LearningProject.Services.Impl;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
-using System.Net;
 using System.Security.Claims;
 
 namespace LearningProject.Controllers
@@ -280,7 +276,6 @@ namespace LearningProject.Controllers
         new SelectListItem { Text = "Active", Value = "active", Selected = (filter == "active") },
         new SelectListItem { Text = "Inactive", Value = "inactive", Selected = (filter == "inactive") }
     };
-
             return View(viewModel);
         }
 
@@ -425,7 +420,6 @@ namespace LearningProject.Controllers
             }
 
             var cerere = await _cereriServiceCreate.CreateCerereAsync(model, username);
-
 
             //cititre fisier 
             //if (draft?.Files != null && draft.Files.Any())
@@ -657,9 +651,9 @@ namespace LearningProject.Controllers
                   .Include(c => c.CreatedByUser)                 
                   .Include(c => c.DeletedBy)                      
                   .Include(c => c.Documente)                    
-                      .ThenInclude(d => d.ClaimCanSign)         
+                  .ThenInclude(d => d.ClaimCanSign)         
                   .Include(c => c.Documente)
-                      .ThenInclude(d => d.SignByUser)           
+                  .ThenInclude(d => d.SignByUser)           
                   .FirstOrDefaultAsync(m => m.Id == id);
 
             if (cereri == null)
@@ -743,6 +737,7 @@ namespace LearningProject.Controllers
         public async Task<IActionResult> SaveDraft([FromForm] CreateNewCerereModel dto)
         {
             Cereri draft;
+            CerereFile dto_file;
 
             if (dto.DraftId == 0)
             {
@@ -773,8 +768,10 @@ namespace LearningProject.Controllers
             if (!string.IsNullOrEmpty(dto.Description)) draft.Description = dto.Description;
             if (dto.Value.HasValue) draft.value = dto.Value.Value;
 
+
             // Salvează fisiere și pregătește lista pentru JS
             var uploadedFilesList = new List<object>();
+
             if (dto.UploadedFiles != null && dto.UploadedFiles.Count > 0)
             {
                 string draftFolder = Path.Combine(_fileStoragePath, draft.Id.ToString());
@@ -783,8 +780,34 @@ namespace LearningProject.Controllers
                 foreach (var uploadedFile in dto.UploadedFiles)
                 {
                     var filePath = Path.Combine(draftFolder, uploadedFile.FileName);
+
+                    // 🔹 Verificăm dacă există deja în draft.Files
+                    bool fileExists = draft.Files.Any(f =>
+                        string.Equals(f.FileName, uploadedFile.FileName, StringComparison.OrdinalIgnoreCase) &&
+                        string.Equals(f.FilePath, filePath, StringComparison.OrdinalIgnoreCase)
+                    );
+
+                    if (fileExists)
+                    {
+
+
+                        uploadedFilesList.Add(new
+                        {
+                            FileName = uploadedFile.FileName,
+                            FilePath = $"/uploads/{draft.Id}/{uploadedFile.FileName}",
+                            AlreadyExists = true
+                        });
+
+
+                        // Dacă fișierul există deja, sărim peste el
+                        continue;
+                    }
+
                     using var stream = new FileStream(filePath, FileMode.Create);
                     await uploadedFile.CopyToAsync(stream);
+
+
+                    // 🔹 Creăm CerereFile și îl adăugăm în draft
 
                     var cerereFile = new CerereFile
                     {
@@ -798,7 +821,8 @@ namespace LearningProject.Controllers
                     uploadedFilesList.Add(new
                     {
                         FileName = cerereFile.FileName,
-                        FilePath = $"/uploads/{draft.Id}/{cerereFile.FileName}" // sau ruta accesibilă public
+                        FilePath = $"/uploads/{draft.Id}/{cerereFile.FileName}",// sau ruta accesibilă public
+                        AlreadyExists = false
                     });
                 }
             }
@@ -816,5 +840,42 @@ namespace LearningProject.Controllers
 
 
 
-    }
+        //sterge in functie de id
+
+        public ActionResult DeleteByID( int id)
+        {
+            CerereFile dto_file;
+
+            var current_cerere = _context.CerereFile.Where(w => w.Id == id).First();
+
+            if (current_cerere == null)
+            {
+                return NotFound();
+            }
+            _context.CerereFile.Remove(current_cerere);
+            _context.SaveChanges();
+            return RedirectToAction("Create"); 
+        }
+
+
+        //sterge toate randurile in functie de id_cerere
+        public ActionResult DeleteAllCereri(int idCerere)
+        {
+            var filesToDelete = _context.CerereFile
+                               .Where(f => f.CereriId == idCerere)
+                               .ToList();
+
+            if (!filesToDelete.Any())
+            {
+                return NotFound(); 
+            }
+
+            // Ștergem toate înregistrările găsite
+            _context.CerereFile.RemoveRange(filesToDelete);
+
+            _context.SaveChanges();
+
+            return RedirectToAction("Create"); 
+             }
+        }
 }

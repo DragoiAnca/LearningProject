@@ -6,34 +6,64 @@
 
 <div class="container mt-4">
     <div class="card shadow-lg border-0">
+
+        <!-- HEADER -->
         <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
             <h4 class="mb-0">
                 <i class="bi bi-file-earmark-richtext"></i>
                 Creează o cerere nouă
-                </h4>
+            </h4>
         </div>
 
+        <!-- CARD BODY -->
         <div class="row justify-content-center" style="margin: 10px;">
             <div class="col-md-6">
-                <!-- FORM finalizare cerere -->
+
+                <!-- FORM -->
                 <form asp-action="Create" enctype="multipart/form-data" novalidate>
                     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
-                    <!-- HIDDEN INPUT DraftId -->
+                    <!-- ACTIUNI UPLOAD / DELETE -->
+                    <div class="card border-0" style="background-color: #f2f2f2; padding: 20px;">
+                        <div class="d-flex justify-content-around">
+                            <button type="button"
+                                    class="btn btn-success"
+                                    onclick="document.getElementById('customFile').click();"
+                                    data-toggle="tooltip"
+                                    data-placement="bottom"
+                                    title="Încarcă fișier">
+                                <i class="bi bi-upload"></i> &nbsp; Încarcă fișiere
+                            </button>
+
+                            <a class="btn btn-danger"
+                               href="@Url.Action("DeleteAllCereri", "Cereri", new { idCerere = Model.DraftId })"
+                               data-toggle="tooltip"
+                               data-placement="bottom"
+                               title="Șterge toate fișierele">
+                                <i class="bi bi-trash3"></i> &nbsp; Șterge toate fișierele
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- DRAFT ID -->
                     <input type="hidden" asp-for="DraftId" />
 
+
+                    <!-- INPUT: DENUMIRE CERERE -->
                     <div class="form-group mb-3">
                         <p class="fw-bold">Denumire Cerere</p>
                         <input asp-for="Name" class="form-control" />
                         <span asp-validation-for="Name" class="text-danger"></span>
                     </div>
 
+                    <!-- INPUT: DESCRIERE -->
                     <div class="form-group mb-3">
                         <p class="fw-bold">Descriere</p>
                         <input asp-for="Description" class="form-control" />
                         <span asp-validation-for="Description" class="text-danger"></span>
                     </div>
 
+                    <!-- INPUT: VALOARE -->
                     <div class="form-group mb-3">
                         <p class="fw-bold">Valoare</p>
                         <input asp-for="Value" type="number" step="0.01" class="form-control" />
@@ -41,52 +71,70 @@
                     </div>
 
 
+                    <!-- INPUT REAL HIDDEN FILE -->
                     <div class="form-group mb-3">
-                        <p class="fw-bold">Încarcă documente</p>
-
-                        <!-- Input real, ascuns -->
                         <input asp-for="UploadedFiles" type="file" id="customFile" class="d-none" multiple />
-
-                        <!-- Buton personalizat -->
-                        <button type="button" class="btn btn-primary" onclick="document.getElementById('customFile').click();">
-                            <i class="bi bi-upload"></i>
-                            Alege fișiere
-                        </button>
-
-                        <!-- Label pentru afișarea numelor fișierelor -->
+@* 
                         @if (Model.ExistingFiles == null || !Model.ExistingFiles.Any())
                         {
-                            <span id="fileNames" class="ms-2 text-muted">Niciun fișier selectat</span>
-                        }
+                            <span id="fileNames" class="ms-2 text-muted">Niciun fișier selectat</span> //here modifica
+                        } *@
 
                         <span asp-validation-for="UploadedFiles" class="text-danger"></span>
                     </div>
 
+
                     <!-- AFISARE FISIERE EXISTENTE -->
-                    <ul id="existingFilesList">
-                            @if (Model.ExistingFiles != null && Model.ExistingFiles.Any())
+                    @if (Model.ExistingFiles != null && Model.ExistingFiles.Any())
                     {
                         <div class="mb-3">
-                            <label>Fișiere deja încărcate:</label>
+                            <label class="fw-bold">Fișiere deja încărcate:</label>
 
-                                @if (Model.ExistingFiles != null && Model.ExistingFiles.Any())
-                                {
+                            <table class="table table-striped" id="existingFilesTable">
+                                <thead>
+                                    <tr>
+                                        <th>Nume fișier</th>
+                                        <th>Acțiuni</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
                                     @foreach (var file in Model.ExistingFiles)
                                     {
-                                        <li>
-                                            <a href="@Url.Action("DownloadFile", "Cereri", new { id = file.Id })" target="_blank">
-                                                @file.FileName
-                                            </a>
-                                        </li>
+                                        <tr>
+                                            <td>@file.FileName</td>
+                                            <td>
+                                                <a class="btn btn-danger btn-xl btn-circle"
+                                                   href="@Url.Action("DeleteByID", "Cereri", new { id = file.Id })"
+                                                   data-toggle="tooltip"
+                                                   data-placement="bottom"
+                                                   title="Șterge fișierul">
+                                                    <i class="bi bi-trash3"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
                                     }
-                                }
-                        </div>
+                                </tbody>
+                            </table>
+
+                            <span id="noFilesMessage"
+                                  style="color:#777; display:@(Model.ExistingFiles.Any() ? "none" : "inline")">
+                                Niciun fișier selectat
+                            </span>
+
+@*                             <div id="errorMessages" style="color:red; margin-top:10px;"></div>
+ *@                        </div>
                     }
-                    </ul>
-            <span id="uploadError" class="text-danger"></span>
+                    else
+                    {
+                        <ul id="existingFilesList"></ul>
+                        <span id="fileNamesSpan" style="display:none; color:#777;">Niciun fișier selectat</span>
+                    }
+
+                    <span id="uploadError" class="text-danger"></span>
+                    <div id="errorMessages" style="color:red; margin-top:10px;"></div>
 
 
-
+                    <!-- SUBMIT -->
                     <div class="form-group text-center">
                         <input type="submit" value="Creează Cererea" class="btn btn-primary" />
                     </div>
@@ -96,58 +144,4 @@
     </div>
 </div>
 
-<script>
-
-    document.addEventListener("DOMContentLoaded", function () {
-
-        // DraftId din hidden input
-        const draftInput = document.querySelector("input[name='DraftId']");
-        let draftId = draftInput ? draftInput.value : 0;
-        const inputs = document.querySelectorAll("input[type='text'], input[type='number']");
-        const fileInput = document.querySelector("input[type='file']");
-        const fileList = document.getElementById("existingFilesList");
-        const fileNamesSpan = document.getElementById("fileNames");
-
-        if (!fileInput) return;
-
-        function saveDraft(data = {}) {
-            const formData = new FormData();
-
-            formData.append("DraftId", draftId);
-
-            for (const key in data) {
-                if (key === "UploadedFiles") {
-                    for (let f of data[key]) formData.append("UploadedFiles", f);
-                } else {
-                    formData.append(key, data[key]);
-                }
-            }
-
-            fetch("/Cereri/SaveDraft", {
-                method: "PUT",
-                body: formData
-            })
-            .then(r => r.json())
-            .then(resp => {
-                if (resp.draftId) {
-                    draftId = resp.draftId;
-                    if (draftInput) draftInput.value = draftId;
-                }
-            })
-            .catch(e => console.error("Save draft error:", e));
-        }
-
-        // Autosave pentru inputuri
-        inputs.forEach(input => {
-            input.addEventListener("focusout", () => saveDraft({ [input.name]: input.value }));
-        });
-
-        // Autosave pentru fisiere
-        if (fileInput) {
-            fileInput.addEventListener("change", e => {
-                const files = e.target.files;
-                if (files.length > 0) saveDraft({ UploadedFiles: files });
-            });
-        }
-    });
-</script>
+<script src="~/js/createCerere.js"></script>

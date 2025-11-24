@@ -1,4 +1,5 @@
 ﻿using LearningProject.Models;
+using LearningProject.Models.ViewModels;
 using Microsoft.Extensions.Options;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -16,7 +17,11 @@ namespace LearningProject.Services
             _httpClient = httpClient;
             _apiUrls = apiUrls.Value;
         }
-
+        public ViewModelPaginatedListCereri ToViewModelPaginated(List<Cereri> cereri) 
+        {
+            ViewModelPaginatedListCereri newmodel = new ViewModelPaginatedListCereri();
+            return newmodel;
+        }
         public async Task<string> SendEmailAsync(Email email)
         {
             var response = await _httpClient.PostAsJsonAsync(_apiUrls.SendEmail, email);

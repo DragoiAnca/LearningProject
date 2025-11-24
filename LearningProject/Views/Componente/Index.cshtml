@@ -1,1 +1,39 @@
-﻿@await Component.InvokeAsync("CerereCard")
+﻿@model List<LearningProject.Models.Signature>
+
+<h2 class="text-center my-4">Cererile pe care le puteți semna</h2>
+
+<div class="row g-4 d-flex justify-content-center" style="background-color: lightblue;">
+    @if (Model != null && Model.Any())
+    {
+        foreach (var signature in Model)
+        {
+            <div class="col-md-4 d-flex justify-content-center">
+                <div class="card h-100 shadow-sm border-0 rounded-4 hover-shadow" style="width: 18rem; transition: transform 0.3s, box-shadow 0.3s;">
+                    <img class="card-img-top rounded-top-4" src="~/images/signature.jpg" alt="Signature image">
+                    <div class="card-body text-center">
+                        <h5 class="card-title text-primary">@signature.CerereId</h5>
+                        <p class="card-text"><strong>Order:</strong> @signature.order</p>
+                        <p class="card-text"><strong>Status:</strong> @signature.Status</p>
+                        <p class="card-text"><small>Created: @(signature.DataSemnarii.HasValue? signature.DataSemnarii.Value.ToString("dd/MM/yyyy") : "-")</small></p>
+                        <p class="card-text"><strong>Claim:</strong> @signature.ClaimCanSign?.name</p>
+                        <a href="@Url.Action("Sign", "Cerere", new { id = signature.CerereId })" class="btn btn-primary mt-2">Semnează</a>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="col-12">
+            <p class="text-muted text-center">No data available.</p>
+        </div>
+    }
+</div>
+
+<style>
+    /* Hover effect pentru card */
+    .hover-shadow:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    }
+</style>

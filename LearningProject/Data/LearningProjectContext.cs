@@ -23,6 +23,7 @@ namespace LearningProject.Data
         public DbSet<LearningProject.Models.Course> Courses { get; set; }
 
         public DbSet<LearningProject.Models.Signature> Signatures { get; set; }
+        public DbSet<LearningProject.Models.DraftModel.CerereFile> CerereFile { get; set; }
 
 
 
