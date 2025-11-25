@@ -6,7 +6,6 @@ using LearningProject.Services.Impl;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
 using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
@@ -436,12 +435,12 @@ namespace LearningProject.Controllers
             //    }
             //}
 
-            // Șterge draftul
-            if (draft != null)
-            {
-                _context.Cereri.Remove(draft);
-                await _context.SaveChangesAsync();
-            }
+            //// Șterge draftul
+            //if (draft != null)
+            //{
+            //    _context.Cereri.Remove(draft);
+            //    await _context.SaveChangesAsync();
+            //}
 
             return RedirectToAction("FilterCereri");
         }
@@ -865,10 +864,10 @@ namespace LearningProject.Controllers
                                .Where(f => f.CereriId == idCerere)
                                .ToList();
 
-            if (!filesToDelete.Any())
-            {
-                return NotFound(); 
-            }
+            //if (!filesToDelete.Any())
+            //{
+            //    return Json(new { success = false, message = "Cererea nu a fost găsită." });
+            //}
 
             // Ștergem toate înregistrările găsite
             _context.CerereFile.RemoveRange(filesToDelete);

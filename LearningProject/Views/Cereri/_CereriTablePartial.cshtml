@@ -5,6 +5,10 @@
         height: 110px;
         overflow: auto;
     }
+
+    .custom-dialog {
+        max-width: 1800px !important; 
+    }
 </style>
 
 
@@ -236,10 +240,11 @@
 
 <!-- Modal global Detalii-->
 <div class="modal fade" id="detaliiModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg custom-dialog">
         <div class="modal-content" id="detaliiModalContent"></div>
     </div>
 </div>
+
 
 @section Scripts {
     @await Html.PartialAsync("_ValidationScriptsPartial")

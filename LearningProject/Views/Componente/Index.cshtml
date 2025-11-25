@@ -2,13 +2,13 @@
 
 <h2 class="text-center my-4">Cererile pe care le puteți semna</h2>
 
-<div class="row g-4 d-flex justify-content-center" style="background-color: lightblue;">
+<div class="row g-4 d-flex justify-content-center">
     @if (Model != null && Model.Any())
     {
         foreach (var signature in Model)
         {
-            <div class="col-md-4 d-flex justify-content-center">
-                <div class="card h-100 shadow-sm border-0 rounded-4 hover-shadow" style="width: 18rem; transition: transform 0.3s, box-shadow 0.3s;">
+            <div class="col-md-4 d-flex justify-content-center" >
+                <div class="card h-100 shadow-sm border-0 rounded-4 hover-shadow card-fill" style="width: 18rem; transition: transform 0.3s, box-shadow 0.3s;">
                     <img class="card-img-top rounded-top-4" src="~/images/signature.jpg" alt="Signature image">
                     <div class="card-body text-center">
                         <h5 class="card-title text-primary">@signature.CerereId</h5>
@@ -16,7 +16,12 @@
                         <p class="card-text"><strong>Status:</strong> @signature.Status</p>
                         <p class="card-text"><small>Created: @(signature.DataSemnarii.HasValue? signature.DataSemnarii.Value.ToString("dd/MM/yyyy") : "-")</small></p>
                         <p class="card-text"><strong>Claim:</strong> @signature.ClaimCanSign?.name</p>
-                        <a href="@Url.Action("Sign", "Cerere", new { id = signature.CerereId })" class="btn btn-primary mt-2">Semnează</a>
+                        <a href="@Url.Action("Sign", "Componente", new { id = signature.CerereId })"
+                           class="btn btn-primary mt-2 btn-sign"
+                           data-id="@signature.CerereId">
+                            <i class="bi bi-pen"></i> Semnează
+                        </a>
+
                     </div>
                 </div>
             </div>
@@ -31,9 +36,82 @@
 </div>
 
 <style>
-    /* Hover effect pentru card */
+
+     .card-fill {
+        background: linear-gradient(135deg, #d9ecff, #f0f7ff);
+    }
+
     .hover-shadow:hover {
         transform: translateY(-5px);
         box-shadow: 0 10px 20px rgba(0,0,0,0.2);
     }
+
+    .btn-success {
+        background-color: #28a745 !important;
+        border-color: #28a745 !important;
+    }
 </style>
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const buttons = document.querySelectorAll(".btn-sign");
+
+        buttons.forEach(btn => {
+
+            btn.addEventListener("click", function (e) {
+                e.preventDefault();
+
+                const cerereId = this.dataset.id;
+                const button = this;
+
+                // 1. AFIȘĂM LOADER 5 secunde
+                button.disabled = true;
+                button.innerHTML = `
+                    <div class="spinner-border spinner-border-sm text-light" role="status">
+                      <span class="sr-only">Loading...</span>
+                    </div> Procesare...
+                `;
+
+                // Așteptăm 5 secunde
+                setTimeout(() => {
+
+                    // 2. TRIMITEM CEREREA AJAX
+                    fetch(`/Componente/Sign/${cerereId}`, {
+                        method: "POST"
+                    })
+                    .then(r => {
+                        if (!r.ok) throw new Error("Eroare la semnare");
+                        return r.text();
+                    })
+                    .then(msg => {
+
+                        // 3. BUTONUL DEVINE VERDE + MESAJ SUCCESS
+                        button.classList.remove("btn-primary");
+                        button.classList.add("btn-success");
+
+                        button.innerHTML = `
+                            <i class="bi bi-check-circle"></i> Semnat cu succes
+                        `;
+
+                        // 4. REFRESH la pagină după 2 secunde
+                        setTimeout(() => {
+                            location.reload();
+                        }, 2000);
+
+                    })
+                    .catch(err => {
+                        button.disabled = false;
+                        button.classList.add("btn-danger");
+                        button.innerHTML = `<i class="bi bi-x-circle"></i> Eroare`;
+
+                        console.error(err);
+                    });
+
+                }, 2000); // <-- cele 2 secunde de loader
+            });
+        });
+    });
+</script>
+

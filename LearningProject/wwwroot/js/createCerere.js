@@ -105,6 +105,9 @@
         this.value = "";
     });
 
+
+
+
     // Upload live fișiere
     fileInput.addEventListener("change", function () {
         const files = Array.from(this.files);

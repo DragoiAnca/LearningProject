@@ -37,11 +37,16 @@
 
                             <a class="btn btn-danger"
                                href="@Url.Action("DeleteAllCereri", "Cereri", new { idCerere = Model.DraftId })"
+                               data-id="@Model.DraftId"
+                               onclick="deleteAllFiles(event, this)"
                                data-toggle="tooltip"
                                data-placement="bottom"
                                title="Șterge toate fișierele">
                                 <i class="bi bi-trash3"></i> &nbsp; Șterge toate fișierele
                             </a>
+
+                            <div id="deleteFilesMessage" class="mt-2"></div>
+
                         </div>
                     </div>
 
@@ -126,7 +131,37 @@
                     }
                     else
                     {
-                        <ul id="existingFilesList"></ul>
+
+                        <table class="table table-striped" id="existingFilesTable">
+                            <thead>
+                                <tr>
+                                    <th>Nume fișier</th>
+                                    <th>Acțiuni</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.ExistingFiles != null && Model.ExistingFiles.Any())
+                                {
+                                    @foreach (var file in Model.ExistingFiles)
+                                    {
+                                        <tr>
+                                            <td>@file.FileName</td>
+                                        <td>
+                                            <a class="btn btn-danger btn-xl btn-circle"
+                                               href="@Url.Action("DeleteByID", "Cereri", new { id = file.Id })"
+                                               data-toggle="tooltip"
+                                               data-placement="bottom"
+                                               title="Șterge fișierul">
+                                                <i class="bi bi-trash3"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                                }
+                            </tbody>
+                        </table>
+
+
                         <span id="fileNamesSpan" style="display:none; color:#777;">Niciun fișier selectat</span>
                     }
 

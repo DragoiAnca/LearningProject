@@ -49,3 +49,41 @@ body {
         border-bottom: 3px solid lightslategrey;
         padding-bottom: 2px;
     }
+
+
+/* Modal Larg - Adaug? acest cod în wwwroot/css/site.css */
+
+/* Seteaz? dimensiune mare pentru toate modalele cu clasa modal-xl */
+.modal-dialog.modal-xl {
+    max-width: 1400px !important;
+    width: 90% !important;
+}
+
+/* Sau dac? vrei s? afectezi doar un modal specific */
+#detaliiCerereModal .modal-dialog {
+    max-width: 1400px !important;
+    width: 90% !important;
+}
+
+/* Pentru ecrane mici, p?streaz?-l responsive */
+@media (max-width: 1200px) {
+    .modal-dialog.modal-xl {
+        max-width: 95% !important;
+        width: 95% !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .modal-dialog.modal-xl {
+        max-width: 100% !important;
+        width: 100% !important;
+        margin: 0.5rem !important;
+    }
+}
+
+/* Pentru modal full-width (dac? vrei) */
+.modal-dialog-fullwidth {
+    max-width: 98% !important;
+    width: 98% !important;
+    margin: 1rem auto !important;
+}

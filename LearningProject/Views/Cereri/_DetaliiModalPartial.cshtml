@@ -1,167 +1,196 @@
 ﻿@model LearningProject.Models.Cereri
 
-<div class="modal-header flex-column align-items-start bg-light border-bottom py-3">
-    <h5 class="modal-title mb-1">
-        <i class="bi bi-person-vcard  me-2"></i>
-        Detalii Cererea
-    </h5>
-    <p class="text-muted mb-0">
-        <small>Vizualizat de: <strong>@Model.CreatedByUser?.Username</strong></small>
-    </p>
-</div>
 
-<div class="modal-body">
-    <div class="card mb-3 shadow-sm">
-        <div class="card-body text-center">
-            <hr />
-            <dl class="row mb-0">
+<div class="modal-content">
 
+    <div class="modal-header flex-column align-items-start bg-light border-bottom py-3">
+        <h5 class="modal-title mb-1">
+            <i class="bi bi-person-vcard  me-2"></i>
+            Detalii Cererea
+        </h5>
+        <p class="text-muted mb-0">
+            <small>Vizualizat de: <strong>@Model.CreatedByUser?.Username</strong></small>
+        </p>
+    </div>
 
-                <div class="d-flex justify-content-around">
-                    <div class="p-2">
+    <div class="modal-body">
 
 
-                        <dt class="text-secondary">Denumire Cerere:</dt>
-                        <dd class="fw-bold">@Html.DisplayFor(model => model.Name)</dd>
+        <div class="d-flex bd-highlight">
 
-                        <dt class="text-secondary">Scurta Descriere:</dt>
-                        <dd>@Html.DisplayFor(model => model.Description)</dd>
-
-                        <dt class="text-secondary">Data Creare Cerere:</dt>
-                        <dd>@Html.DisplayFor(model => model.createdOn)</dd>
-
-                        <dt class="text-secondary">Status Cerere:</dt>
-                        <dd>
-                            @if (Model.IsActive)
-                            {
-                                <span class="badge bg-success">Activ</span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-danger">Inactiv</span>
-                            }
-                        </dd>
-
-                    </div>
-
-                    
+        <div class="p-2 flex-fill bd-highlight">Descriere
 
 
-                    <div class="p-2">
+                <div class="card mb-3 shadow-sm">
+                    <div class="card-body text-center">
+                        <hr />
+                        <dl class="row mb-0">
+
+                            <div class="d-flex justify-content-around">
+                                <div class="p-2">
+
+                                    <dt class="text-secondary">Denumire Cerere:</dt>
+                                    <dd class="fw-bold">@Html.DisplayFor(model => model.Name)</dd>
+
+                                    <dt class="text-secondary">Scurta Descriere:</dt>
+                                    <dd>@Html.DisplayFor(model => model.Description)</dd>
+
+                                    <dt class="text-secondary">Data Creare Cerere:</dt>
+                                    <dd>@Html.DisplayFor(model => model.createdOn)</dd>
+
+                                    <dt class="text-secondary">Status Cerere:</dt>
+                                    <dd>
+                                        @if (Model.IsActive)
+                                        {
+                                            <span class="badge bg-success">Activ</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger">Inactiv</span>
+                                        }
+                                    </dd>
+                                </div>
+
+                                <div class="p-2">
+
+                                    <dt class="text-secondary">Status Cerere:</dt>
+                                    <dd>
+                                        @if (Model.Deleted.HasValue)
+                                        {
+                                            <span class="badge bg-danger">Șters</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-success">Cererea nu este stearsa.</span>
+                                        }
+                                    </dd>
+                                    @if (Model.Deleted != null)
+                                    {
+                                        <dt class="text-secondary">Data Stergere Cerere:</dt>
+                                        <dd>@Html.DisplayFor(model => model.Deleted)</dd>
+                                    }
+
+                                    <dt class="text-secondary">Creat De Utilizatorul:</dt>
+                                    <dd>@Html.DisplayFor(model => model.CreatedByUser.Name)</dd>
+
+                                    <dt class="text-secondary">Sters de Utilizatorul:</dt>
+                                    <dd>@Html.DisplayFor(model => model.DeletedBy.Name)</dd>
+
+                                    <dt class="text-secondary">Valoare:</dt>
+                                    <dd>@Html.DisplayFor(model => model.value)</dd>
 
 
 
+                                </div>
 
-                        <dt class="text-secondary">Status Cerere:</dt>
-                        <dd>
-                            @if (Model.Deleted.HasValue)
-                            {
-                                <span class="badge bg-danger">Șters</span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-success">Cererea nu este stearsa.</span>
-                            }
-                        </dd>
-                        @if (Model.Deleted != null)
-                        {
-                            <dt class="text-secondary">Data Stergere Cerere:</dt>
-                            <dd>@Html.DisplayFor(model => model.Deleted)</dd>
-                        }
+                            </div>
 
-                        <dt class="text-secondary">Creat De Utilizatorul:</dt>
-                        <dd>@Html.DisplayFor(model => model.CreatedByUser.Name)</dd>
+                            <!--Integrare semnaturi-->
 
-                        <dt class="text-secondary">Sters de Utilizatorul:</dt>
-                        <dd>@Html.DisplayFor(model => model.DeletedBy.Name)</dd>
+                            <div class="d-flex justify-content-center mt-4">
+                                <div class="card text-center">
+                                    <h5 class="card-header fw-bold">Semnături</h5>
+                                    <div class="card-body">
 
-                        <dt class="text-secondary">Valoare:</dt>
-                        <dd>@Html.DisplayFor(model => model.value)</dd>
-
-
-
-                    </div>
-
-                </div>
-
-                <!--Integrare semnaturi-->
-
-                <div class="d-flex justify-content-center mt-4">
-                    <div class="card text-center">
-                        <h5 class="card-header fw-bold">Semnături</h5>
-                        <div class="card-body">
-
-                            <div class="d-flex justify-content-center align-items-center">
-                                @{
-                                    var documenteOrdinate = Model.Documente.OrderBy(x => x.order).ToList();
-                                }
-
-                                @foreach (var s in documenteOrdinate)
-                                {
-                                    <div class="p-2 text-center">
-                                        <div>@s.ClaimCanSign.name</div>
-
-                                        @* Status semnătură *@
-                                        <div class="mb-2">
-                                            @if (s.Status == StatusDocument.Semnat)
-                                            {
-                                                <span class="badge bg-success">Semnat</span>
+                                        <div class="d-flex justify-content-center align-items-center">
+                                            @{
+                                                var documenteOrdinate = Model.Documente.OrderBy(x => x.order).ToList();
                                             }
-                                            else if (s.Status == StatusDocument.Refuzat)
+
+                                            @foreach (var s in documenteOrdinate)
                                             {
-                                                <span class="badge bg-danger">Refuzat</span>
-                                            }
-                                            else
-                                            {
-                                                <span class="badge bg-secondary">Ne-semnat</span>
+                                                <div class="p-2 text-center">
+                                                    <div>@s.ClaimCanSign.name</div>
+
+                                                    @* Status semnătură *@
+                                                    <div class="mb-2">
+                                                        @if (s.Status == StatusDocument.Semnat)
+                                                        {
+                                                            <span class="badge bg-success">Semnat</span>
+                                                        }
+                                                        else if (s.Status == StatusDocument.Refuzat)
+                                                        {
+                                                            <span class="badge bg-danger">Refuzat</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="badge bg-secondary">Ne-semnat</span>
+                                                        }
+                                                    </div>
+
+                                                    @{
+                                                        var beforeCurrent = documenteOrdinate
+                                                        .Where(d => d.order < s.order)
+                                                        .ToList();
+
+                                                        bool canAct = beforeCurrent.All(d => d.Status == StatusDocument.Semnat);
+                                                        bool alreadyHandled = s.Status == StatusDocument.Semnat || s.Status == StatusDocument.Refuzat;
+
+                                                    }
+
+                                                    @if (canAct && !alreadyHandled && Model.IsActive)
+                                                    {
+                                                        <div class="d-flex justify-content-center gap-2">
+                                                            @* Buton Semneaza *@
+                                                            <form asp-action="SignCerere" method="post">
+                                                                <input type="hidden" name="cerereId" value="@Model.Id" />
+                                                                <input type="hidden" name="signatureId" value="@s.Id" />
+                                                                <input type="hidden" name="sign" value="true" />
+
+                                                                <button type="submit" class="btn btn-primary btn-sm">
+                                                                    Semneaza
+                                                                </button>
+                                                            </form>
+
+                                                            @* Buton Refuza *@
+                                                            <form asp-action="SignCerere" method="post">
+                                                                <input type="hidden" name="cerereId" value="@Model.Id" />
+                                                                <input type="hidden" name="signatureId" value="@s.Id" />
+                                                                <input type="hidden" name="sign" value="false" />
+
+                                                                <button type="submit" class="btn btn-danger btn-sm">
+                                                                    Refuza
+                                                                </button>
+                                                            </form>
+                                                        </div>
+                                                    }
+                                                </div>
+
+                                                @if (s != documenteOrdinate.Last())
+                                                {
+                                                    <div class="vr mx-2"></div>
+                                                }
                                             }
                                         </div>
-
-                                        @{
-                                            var beforeCurrent = documenteOrdinate
-                                            .Where(d => d.order < s.order)
-                                            .ToList();
-
-                                            bool canAct = beforeCurrent.All(d => d.Status == StatusDocument.Semnat);
-                                            bool alreadyHandled = s.Status == StatusDocument.Semnat || s.Status == StatusDocument.Refuzat;
-
-                                        }
-
-                                        @if (canAct && !alreadyHandled && Model.IsActive)
-                                        {
-                                            <div class="d-flex justify-content-center gap-2">
-                                                @* Buton Semneaza *@
-                                                <form asp-action="SignCerere" method="post">
-                                                    <input type="hidden" name="cerereId" value="@Model.Id" />
-                                                    <input type="hidden" name="signatureId" value="@s.Id" />
-                                                    <input type="hidden" name="sign" value="true" />
-
-                                                    <button type="submit" class="btn btn-primary btn-sm">
-                                                        Semneaza
-                                                    </button>
-                                                </form>
-
-                                                @* Buton Refuza *@
-                                                <form asp-action="SignCerere" method="post">
-                                                    <input type="hidden" name="cerereId" value="@Model.Id" />
-                                                    <input type="hidden" name="signatureId" value="@s.Id" />
-                                                    <input type="hidden" name="sign" value="false" />
-
-                                                    <button type="submit" class="btn btn-danger btn-sm">
-                                                        Refuza
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        }
                                     </div>
-
-                                    @if (s != documenteOrdinate.Last())
-                                    {
-                                        <div class="vr mx-2"></div>
-                                    }
-                                }
+                                </div>
                             </div>
-                        </div>
+
+
+
+
+
+                            <div class="d-flex flex-row align-items-center mt-3">
+                                <div class="p-2 fw-bold">Versiune curentă:</div>
+                                <div class="p-2">
+                                    <span class="badge bg-info text-dark">@Model.VersionNumber </span>
+                                </div>
+                            </div>
+
+
+                            <button class="btn btn-secondary btn-sm mb-2" type="button"
+                                    data-bs-toggle="collapse" data-bs-target="#versionsCollapse"
+                                    aria-expanded="false" aria-controls="versionsCollapse"
+                                    onclick="loadVersions(@Model.Id)">
+                                Vezi toate versiunile
+                            </button>
+
+                            <div class="collapse" id="versionsCollapse">
+                                <div class="card card-body" id="versionsList">
+                                    <div class="text-muted text-center">Se încarcă versiuni...</div>
+                                </div>
+                            </div>
+                        </dl>
                     </div>
                 </div>
 
@@ -169,30 +198,38 @@
 
 
 
-                <div class="d-flex flex-row align-items-center mt-3">
-                    <div class="p-2 fw-bold">Versiune curentă:</div>
-                    <div class="p-2">
-                        <span class="badge bg-info text-dark">@Model.VersionNumber </span>
-                    </div>
-                </div>
-
-
-                <button class="btn btn-secondary btn-sm mb-2" type="button"
-                        data-bs-toggle="collapse" data-bs-target="#versionsCollapse"
-                        aria-expanded="false" aria-controls="versionsCollapse"
-                        onclick="loadVersions(@Model.Id)">
-                    Vezi toate versiunile
-                </button>
-
-                <div class="collapse" id="versionsCollapse">
-                    <div class="card card-body" id="versionsList">
-                        <div class="text-muted text-center">Se încarcă versiuni...</div>
-                    </div>
-                </div>
-
-
-
-            </dl>
         </div>
+
+
+
+
+
+
+
+
+
+
+
+
+        <div class="p-2 flex-fill bd-highlight">
+
+            files
+
+
+
+               
+        </div>
+
+        </div>
+
+
+
+
+
+
+
+
+
+
     </div>
 </div>

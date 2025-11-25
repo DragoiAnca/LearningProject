@@ -1,0 +1,55 @@
+﻿@model LearningProject.Models.Signature
+
+@{
+    ViewData["Title"] = "SignCerere";
+}
+
+<h1>SignCerere</h1>
+
+<h4>Signature</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="SignCerere">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="order" class="control-label"></label>
+                <input asp-for="order" class="form-control" />
+                <span asp-validation-for="order" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Status" class="control-label"></label>
+                <select asp-for="Status" class="form-control"></select>
+                <span asp-validation-for="Status" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="DataSemnarii" class="control-label"></label>
+                <input asp-for="DataSemnarii" class="form-control" />
+                <span asp-validation-for="DataSemnarii" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="CerereId" class="control-label"></label>
+                <select asp-for="CerereId" class ="form-control" asp-items="ViewBag.CerereId"></select>
+            </div>
+            <div class="form-group">
+                <label asp-for="ClaimCanSignId" class="control-label"></label>
+                <select asp-for="ClaimCanSignId" class ="form-control" asp-items="ViewBag.ClaimCanSignId"></select>
+            </div>
+            <div class="form-group">
+                <label asp-for="SignByUserId" class="control-label"></label>
+                <select asp-for="SignByUserId" class ="form-control" asp-items="ViewBag.SignByUserId"></select>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

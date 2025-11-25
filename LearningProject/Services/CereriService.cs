@@ -95,6 +95,7 @@ namespace LearningProject.Services
                 .Include(c => c.CreatedByUser)
                 .Include(c => c.DeletedBy)
                 .Include(c => c.Documente)//o cerere are mai multe semnaturi
+                .Where(c => !c.isDraft)
                 .AsQueryable();
 
             // 🔹 Filtrare nume
@@ -275,6 +276,9 @@ namespace LearningProject.Services
                 draft.Documente = listaSignaturi;
 
                 cerere = draft;
+
+                // FORȚĂM EF să marcheze entitatea ca modificată
+                _context.Entry(cerere).State = EntityState.Modified;
             }
             else
             {
@@ -294,6 +298,9 @@ namespace LearningProject.Services
 
                 _context.Cereri.Add(cerere);
             }
+
+            // --- 3. Salvăm întâi cererea (pentru a avea Id!)
+            await _context.SaveChangesAsync();
 
             // Salvează fișierele atașate dacă există
             if (files != null && files.Count > 0)
@@ -317,8 +324,6 @@ namespace LearningProject.Services
             }
 
             await _context.SaveChangesAsync();
-
-            // Poți trimite mail folosind communication hub aici
 
             return cerere;
         }
